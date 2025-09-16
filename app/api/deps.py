@@ -12,6 +12,7 @@ from app.schemas.token import TokenPayload
 from app.core import security
 from app.core.config import settings
 from app.core.database import SessionLocal
+from app.utils.response import APIException
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login/access-token"
@@ -59,5 +60,23 @@ def get_current_active_superuser(
     if not crud.is_superuser(current_user):
         raise HTTPException(
             status_code=400, detail="The user doesn't have enough privileges"
+        )
+    return current_user
+
+
+def get_current_admin_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not crud.is_active(current_user):
+        raise APIException(
+            status_code=400,
+            message="Inactive user",
+            success=False
+        )
+    if current_user.role != "admin":
+        raise APIException(
+            status_code=403,
+            message="Admin access required",
+            success=False
         )
     return current_user

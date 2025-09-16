@@ -16,6 +16,7 @@ sys.path.insert(0, str(project_root))
 from app.core.database import engine, Base
 from app.models.user import User
 from app.models.item import Item
+from app.models.assessment import Assessment
 
 def setup_database():
     """Create all database tables"""
@@ -28,6 +29,7 @@ def setup_database():
     print("Tables created:")
     print("- users")
     print("- items")
+    print("- assessments")
 
 if __name__ == "__main__":
     setup_database()

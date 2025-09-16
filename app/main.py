@@ -4,9 +4,10 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import settings
 from app.api.routers import users, items, assessments, auth, admin
+from app.utils.response import APIException, api_exception_handler
 
 # Import models to ensure they are registered with SQLAlchemy
-from app.models import User, Item, Assessment, AssessmentQuestion, AssessmentOption, UserAssessment, UserAssessmentResponse
+from app.models import User, Item, Assessment
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -14,6 +15,9 @@ app = FastAPI(
     version="1.0.0",
     description="A modern FastAPI backend with comprehensive features",
 )
+
+# Register custom exception handler
+app.add_exception_handler(APIException, api_exception_handler)
 
 # Set up CORS middleware
 app.add_middleware(
