@@ -15,6 +15,23 @@ router = APIRouter()
 
 # Basic CRUD operations only
 
+
+@router.get("/participant", response_model=APIResponse)
+def get_assessments_for_participant(
+    *,
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """
+    Get all assessments grouped by category for participants.
+    """
+    assessments = crud.get_assessments_by_category(db)
+    
+    return APIResponse(
+        success=True,
+        message="Assessments retrieved successfully",
+        data=assessments
+    )
+
 @router.post("/", response_model=APIResponse)
 def create_assessment(
     *,
@@ -105,7 +122,7 @@ def update_assessment(
     )
 
 
-@router.delete("/{assessment_id}")
+@router.delete("/{assessment_id}", response_model=APIResponse)
 def delete_assessment(
     *,
     db: Session = Depends(deps.get_db),
@@ -115,12 +132,18 @@ def delete_assessment(
     """
     Delete assessment (Admin only).
     """
-    assessment = crud.delete_assessment(db, assessment_id=assessment_id)
-    if not assessment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Assessment not found",
+    success = crud.delete_assessment(db, assessment_id=assessment_id)
+    if not success:
+        return APIResponse(
+            success=False,
+            message="Assessment not found",
+            data=None
         )
-    return {"message": "Assessment deleted successfully"}
+    
+    return APIResponse(
+        success=True,
+        message="Assessment deleted successfully",
+        data={"deleted_id": assessment_id}
+    )
 
 

@@ -36,13 +36,18 @@ def get_current_user(
         )
         token_data = TokenPayload(**payload)
     except (jwt.JWTError, ValidationError):
-        raise HTTPException(
+        raise APIException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
+            message="Could not validate credentials",
+            success=False
         )
     user = crud.get(db, id=int(token_data.sub))
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise APIException(
+            status_code=404, 
+            message="User not found",
+            success=False
+        )
     return user
 
 
@@ -50,7 +55,11 @@ def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
     if not crud.is_active(current_user):
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise APIException(
+            status_code=400, 
+            message="Inactive user",
+            success=False
+        )
     return current_user
 
 
@@ -58,8 +67,10 @@ def get_current_active_superuser(
     current_user: User = Depends(get_current_user),
 ) -> User:
     if not crud.is_superuser(current_user):
-        raise HTTPException(
-            status_code=400, detail="The user doesn't have enough privileges"
+        raise APIException(
+            status_code=400, 
+            message="The user doesn't have enough privileges",
+            success=False
         )
     return current_user
 

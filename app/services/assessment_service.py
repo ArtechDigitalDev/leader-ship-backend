@@ -29,3 +29,39 @@ def update_assessment(db: Session, *, db_obj: Assessment, obj_in: AssessmentUpda
     db.commit()
     db.refresh(db_obj)
     return db_obj
+
+
+def delete_assessment(db: Session, *, assessment_id: int) -> bool:
+    """Delete assessment"""
+    assessment = get_assessment(db, assessment_id=assessment_id)
+    if assessment:
+        db.delete(assessment)
+        db.commit()
+        return True
+    return False
+
+
+def get_assessments_by_category(db: Session) -> dict:
+    """Get all assessments grouped by category for participants"""
+    assessments = db.query(Assessment).filter(Assessment.is_active == True).all()
+    
+    # Group by category
+    categories = {}
+    for assessment in assessments:
+        category = assessment.category
+        if category not in categories:
+            categories[category] = {
+                "category": category.lower().replace(" ", "_"),
+                "categoryTitle": category.title(),
+                "questions": []
+            }
+        
+        # Add question with ID
+        categories[category]["questions"].append({
+            "id": assessment.id,
+            "question": assessment.question
+        })
+    
+    # Convert to list format
+    result = list(categories.values())
+    return result
