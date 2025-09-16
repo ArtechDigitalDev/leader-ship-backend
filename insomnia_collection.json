@@ -1,0 +1,1507 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2024-01-01T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_root",
+      "parentId": "fld_root",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/",
+      "name": "Root",
+      "description": "Root endpoint",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_health",
+      "parentId": "fld_root",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/health",
+      "name": "Health Check",
+      "description": "Health check endpoint",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_login",
+      "parentId": "fld_auth",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/auth/login/access-token",
+      "name": "Login (Access Token)",
+      "description": "Login and get access token",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_signup",
+      "parentId": "fld_auth",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/auth/signup",
+      "name": "Sign Up",
+      "description": "Create a new user account with role",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"newuser@example.com\",\n  \"username\": \"newuser\",\n  \"full_name\": \"New User\",\n  \"mobile_number\": \"1234567890\",\n  \"password\": \"password123\",\n  \"role\": \"participant\",\n  \"terms_accepted\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_login_role",
+      "parentId": "fld_auth",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/auth/login",
+      "name": "Login (Role-Based)",
+      "description": "Login with role validation",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"participant\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_forgot_password",
+      "parentId": "fld_auth",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/auth/forgot-password",
+      "name": "Forgot Password",
+      "description": "Request password reset",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"user@example.com\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_reset_password",
+      "parentId": "fld_auth",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/auth/reset-password",
+      "name": "Reset Password",
+      "description": "Reset password with token",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"token\": \"reset_token_here\",\n  \"new_password\": \"newpassword123\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_verify_email",
+      "parentId": "fld_auth",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/auth/verify-email",
+      "name": "Verify Email",
+      "description": "Verify email address with token",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"token\": \"verification_token_here\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_request_role",
+      "parentId": "fld_auth",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/auth/request-role",
+      "name": "Request Role Upgrade",
+      "description": "Request role upgrade (participant only)",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"requested_role\": \"coach\",\n  \"reason\": \"I have extensive experience in leadership development and want to help others grow as a coach.\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_auth_me",
+      "parentId": "fld_auth",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/auth/me",
+      "name": "Get Current User",
+      "description": "Get current authenticated user",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_users_list",
+      "parentId": "fld_users",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/users/",
+      "name": "List Users",
+      "description": "Get list of all users",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_users_create",
+      "parentId": "fld_users",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/users/",
+      "name": "Create User",
+      "description": "Create a new user",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"full_name\": \"Test User\",\n  \"is_active\": true,\n  \"is_superuser\": false\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_users_me",
+      "parentId": "fld_users",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/users/me",
+      "name": "Get My Profile",
+      "description": "Get current user's profile",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_users_update_me",
+      "parentId": "fld_users",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/users/me",
+      "name": "Update My Profile",
+      "description": "Update current user's profile",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"full_name\": \"Updated Name\",\n  \"email\": \"updated@example.com\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_items_list",
+      "parentId": "fld_items",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/items/",
+      "name": "List Items",
+      "description": "Get list of all items",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_items_create",
+      "parentId": "fld_items",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/items/",
+      "name": "Create Item",
+      "description": "Create a new item",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"Test Item\",\n  \"description\": \"This is a test item\",\n  \"is_active\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_items_get",
+      "parentId": "fld_items",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/items/{{ _.item_id }}",
+      "name": "Get Item",
+      "description": "Get item by ID",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_items_update",
+      "parentId": "fld_items",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/items/{{ _.item_id }}",
+      "name": "Update Item",
+      "description": "Update item by ID",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"Updated Item\",\n  \"description\": \"Updated description\",\n  \"is_active\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_items_delete",
+      "parentId": "fld_items",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/items/{{ _.item_id }}",
+      "name": "Delete Item",
+      "description": "Delete item by ID",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_assessments_list",
+      "parentId": "fld_assessments",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/",
+      "name": "List Assessments",
+      "description": "Get list of all assessments",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_assessments_create",
+      "parentId": "fld_assessments",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/",
+      "name": "Create Assessment",
+      "description": "Create a new assessment",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"title\": \"Test Assessment\",\n  \"description\": \"This is a test assessment\",\n  \"is_active\": true,\n  \"total_questions\": 5,\n  \"estimated_time_minutes\": 10,\n  \"questions\": [\n    {\n      \"question_text\": \"What is your experience level?\",\n      \"question_type\": \"multiple_choice\",\n      \"order_index\": 1,\n      \"is_required\": true,\n      \"options\": [\n        {\n          \"option_text\": \"Beginner\",\n          \"order_index\": 1,\n          \"score_value\": 1\n        },\n        {\n          \"option_text\": \"Intermediate\",\n          \"order_index\": 2,\n          \"score_value\": 2\n        },\n        {\n          \"option_text\": \"Advanced\",\n          \"order_index\": 3,\n          \"score_value\": 3\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_assessments_get",
+      "parentId": "fld_assessments",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/{{ _.assessment_id }}",
+      "name": "Get Assessment",
+      "description": "Get assessment by ID",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_assessments_start",
+      "parentId": "fld_assessments",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/{{ _.assessment_id }}/start",
+      "name": "Start Assessment",
+      "description": "Start an assessment for current user",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_assessments_question",
+      "parentId": "fld_assessments",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/{{ _.assessment_id }}/question/{{ _.question_number }}",
+      "name": "Get Assessment Question",
+      "description": "Get specific question with progress",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_assessments_submit",
+      "parentId": "fld_assessments",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/{{ _.assessment_id }}/submit",
+      "name": "Submit Assessment",
+      "description": "Submit assessment responses",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"responses\": [\n    {\n      \"question_id\": 1,\n      \"selected_option_id\": 2,\n      \"response_time_seconds\": 30\n    },\n    {\n      \"question_id\": 2,\n      \"selected_option_id\": 1,\n      \"response_time_seconds\": 25\n    }\n  ]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_assessments_progress",
+      "parentId": "fld_assessments",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/{{ _.assessment_id }}/progress",
+      "name": "Get Assessment Progress",
+      "description": "Get assessment progress",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_assessments_results",
+      "parentId": "fld_assessments",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/{{ _.assessment_id }}/results",
+      "name": "Get Assessment Results",
+      "description": "Get assessment results",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_assessments_history",
+      "parentId": "fld_assessments",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/user/history",
+      "name": "Get User Assessment History",
+      "description": "Get user's assessment history",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_5cs_questions",
+      "parentId": "fld_5cs",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/5cs/questions",
+      "name": "Get 5Cs Questions",
+      "description": "Get 5Cs assessment questions",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_5cs_submit",
+      "parentId": "fld_5cs",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/5cs/submit",
+      "name": "Submit 5Cs Assessment",
+      "description": "Submit 5Cs assessment responses",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"responses\": [4, 5, 3, 4, 5, 2, 3, 4, 3, 2, 5, 4, 5, 4, 5, 3, 2, 4, 3, 2, 4, 5, 3, 4, 5]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_5cs_profile_determination",
+      "parentId": "fld_5cs",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/5cs/profile-determination",
+      "name": "Profile Determination",
+      "description": "Get detailed leadership profile determination",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"responses\": [4, 5, 3, 4, 5, 2, 3, 4, 3, 2, 5, 4, 5, 4, 5, 3, 2, 4, 3, 2, 4, 5, 3, 4, 5]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_5cs_complete_profile",
+      "parentId": "fld_5cs",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/5cs/complete-profile",
+      "name": "Complete Profile Assessment",
+      "description": "Get both traditional results and profile determination",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"responses\": [4, 5, 3, 4, 5, 2, 3, 4, 3, 2, 5, 4, 5, 4, 5, 3, 2, 4, 3, 2, 4, 5, 3, 4, 5]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_5cs_results",
+      "parentId": "fld_5cs",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/assessments/5cs/results/{{ _.user_id }}",
+      "name": "Get 5Cs Results",
+      "description": "Get 5Cs results for specific user",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_dashboard",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/dashboard",
+      "name": "Admin Dashboard",
+      "description": "Get admin dashboard statistics",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_user_stats",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/users/stats",
+      "name": "User Statistics",
+      "description": "Get user statistics",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_users_list",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/users",
+      "name": "List Users (Admin)",
+      "description": "Get list of users with search and filters",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "query",
+          "value": "",
+          "description": "Search query"
+        },
+        {
+          "name": "status",
+          "value": "",
+          "description": "Filter by status (active, inactive, pending)"
+        },
+        {
+          "name": "page",
+          "value": "1",
+          "description": "Page number"
+        },
+        {
+          "name": "per_page",
+          "value": "10",
+          "description": "Users per page"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_create_user",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/users",
+      "name": "Create User (Admin)",
+      "description": "Create a new user",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"adminuser@example.com\",\n  \"username\": \"adminuser\",\n  \"full_name\": \"Admin User\",\n  \"mobile_number\": \"1234567890\",\n  \"password\": \"password123\",\n  \"is_active\": true,\n  \"is_superuser\": false,\n  \"learning_track\": \"Strategic Vision\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_get_user",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/users/{{ _.user_id }}",
+      "name": "Get User (Admin)",
+      "description": "Get user details by ID",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_update_user",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/users/{{ _.user_id }}",
+      "name": "Update User (Admin)",
+      "description": "Update user by ID",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"full_name\": \"Updated Name\",\n  \"is_active\": true,\n  \"learning_track\": \"Strategic Vision\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_delete_user",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/users/{{ _.user_id }}",
+      "name": "Delete User (Admin)",
+      "description": "Delete user by ID",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_export_users",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/users/export",
+      "name": "Export Users",
+      "description": "Export users data",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"format\": \"csv\",\n  \"include_inactive\": false,\n  \"include_assessments\": true\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_role_requests",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/role-requests",
+      "name": "Get Role Requests",
+      "description": "Get all role requests (Admin only)",
+      "method": "GET",
+      "body": {},
+      "parameters": [
+        {
+          "name": "status",
+          "value": "pending",
+          "description": "Filter by status (pending, approved, rejected)"
+        }
+      ],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_approve_role",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/role-requests/{{ _.user_id }}/approve",
+      "name": "Approve Role Request",
+      "description": "Approve a role request (Admin only)",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_reject_role",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/role-requests/{{ _.user_id }}/reject",
+      "name": "Reject Role Request",
+      "description": "Reject a role request (Admin only)",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_admin_invite_user",
+      "parentId": "fld_admin",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ _.base_url }}/api/v1/admin/invite-user",
+      "name": "Invite User",
+      "description": "Invite a user as coach or admin (Admin only)",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"newcoach@example.com\",\n  \"full_name\": \"New Coach\",\n  \"role\": \"coach\",\n  \"message\": \"Welcome to our coaching team!\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.access_token }}"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_admin",
+      "parentId": "wrk_insomnia",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Admin Panel",
+      "description": "Admin panel endpoints for user management",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_auth",
+      "parentId": "wrk_insomnia",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Authentication",
+      "description": "Authentication endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_users",
+      "parentId": "wrk_insomnia",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Users",
+      "description": "User management endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_items",
+      "parentId": "wrk_insomnia",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Items",
+      "description": "Item management endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_assessments",
+      "parentId": "wrk_insomnia",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Assessments",
+      "description": "Assessment management endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_5cs",
+      "parentId": "wrk_insomnia",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "5Cs Assessment",
+      "description": "5Cs Leadership Assessment endpoints",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "wrk_insomnia",
+      "parentId": null,
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Leadership Dev Backend API",
+      "description": "Complete API collection for Leadership Development Backend",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_base",
+      "parentId": "wrk_insomnia",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://127.0.0.1:8001",
+        "access_token": "",
+        "assessment_id": "1",
+        "item_id": "1",
+        "user_id": "1",
+        "question_number": "1"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url",
+          "access_token",
+          "assessment_id",
+          "item_id",
+          "user_id",
+          "question_number"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1704067200000,
+      "_type": "environment"
+    }
+  ]
+}

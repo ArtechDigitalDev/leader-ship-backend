@@ -1,0 +1,1336 @@
+{
+  "info": {
+    "name": "Leadership Journey API - Complete Collection",
+    "description": "Complete test collection for all API endpoints including Authentication, Users, Items, Assessments, and 5Cs Assessment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "api_base",
+      "value": "{{base_url}}/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assessment_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"username\": \"testuser\",\n  \"full_name\": \"Test User\",\n  \"mobile_number\": \"+1234567890\",\n  \"password\": \"testpassword\",\n  \"terms_accepted\": true\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/auth/register",
+              "host": ["{{api_base}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    console.log('✅ User registered successfully');",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('user_id', response.user.id);",
+                  "} else if (pm.response.code === 400) {",
+                  "    console.log('ℹ️ User might already exist');",
+                  "} else {",
+                  "    console.log('❌ Registration failed');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login with Email (JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"testpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/auth/login",
+              "host": ["{{api_base}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', response.access_token);",
+                  "    pm.collectionVariables.set('user_id', response.user.id);",
+                  "    console.log('✅ Login successful, token saved');",
+                  "    console.log('User ID:', response.user.id);",
+                  "} else {",
+                  "    console.log('❌ Login failed');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login with Username (Form Data)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "testuser",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "testpassword",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_base}}/auth/login/username",
+              "host": ["{{api_base}}"],
+              "path": ["auth", "login", "username"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', response.access_token);",
+                  "    pm.collectionVariables.set('user_id', response.user.id);",
+                  "    console.log('✅ Username login successful, token saved');",
+                  "    console.log('User ID:', response.user.id);",
+                  "} else {",
+                  "    console.log('❌ Username login failed');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "OAuth2 Login (Form Data)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "testuser",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "testpassword",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_base}}/auth/login/access-token",
+              "host": ["{{api_base}}"],
+              "path": ["auth", "login", "access-token"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', response.access_token);",
+                  "    console.log('✅ OAuth2 login successful, token saved');",
+                  "} else {",
+                  "    console.log('❌ OAuth2 login failed');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/auth/me",
+              "host": ["{{api_base}}"],
+              "path": ["auth", "me"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const user = pm.response.json();",
+                  "    console.log('✅ Current user retrieved');",
+                  "    console.log('User:', user.full_name, '(', user.email, ')');",
+                  "    console.log('Is Admin:', user.is_superuser);",
+                  "} else {",
+                  "    console.log('❌ Failed to get current user');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users (Admin Only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/users?skip=0&limit=100",
+              "host": ["{{api_base}}"],
+              "path": ["users"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const users = pm.response.json();",
+                  "    console.log('✅ Retrieved', users.length, 'users');",
+                  "} else {",
+                  "    console.log('❌ Failed to get users');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/users/{{user_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["users", "{{user_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const user = pm.response.json();",
+                  "    console.log('✅ User retrieved:', user.full_name);",
+                  "} else {",
+                  "    console.log('❌ Failed to get user');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create User (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"username\": \"newuser\",\n  \"full_name\": \"New User\",\n  \"mobile_number\": \"+1987654321\",\n  \"password\": \"newpassword\",\n  \"is_active\": true,\n  \"is_superuser\": false\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/users",
+              "host": ["{{api_base}}"],
+              "path": ["users"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const user = pm.response.json();",
+                  "    console.log('✅ User created:', user.full_name);",
+                  "} else {",
+                  "    console.log('❌ Failed to create user');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Updated Test User\",\n  \"email\": \"updated@example.com\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/users/{{user_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["users", "{{user_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const user = pm.response.json();",
+                  "    console.log('✅ User updated:', user.full_name);",
+                  "} else {",
+                  "    console.log('❌ Failed to update user');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete User (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/users/{{user_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["users", "{{user_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ User deleted successfully');",
+                  "} else {",
+                  "    console.log('❌ Failed to delete user');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Items",
+      "item": [
+        {
+          "name": "Get All Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/items?skip=0&limit=100",
+              "host": ["{{api_base}}"],
+              "path": ["items"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const items = pm.response.json();",
+                  "    console.log('✅ Retrieved', items.length, 'items');",
+                  "    if (items.length > 0) {",
+                  "        pm.collectionVariables.set('item_id', items[0].id);",
+                  "    }",
+                  "} else {",
+                  "    console.log('❌ Failed to get items');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Item by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/items/{{item_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["items", "{{item_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const item = pm.response.json();",
+                  "    console.log('✅ Item retrieved:', item.title);",
+                  "} else {",
+                  "    console.log('❌ Failed to get item');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Item\",\n  \"description\": \"This is a test item\",\n  \"price\": 29.99\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/items",
+              "host": ["{{api_base}}"],
+              "path": ["items"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const item = pm.response.json();",
+                  "    pm.collectionVariables.set('item_id', item.id);",
+                  "    console.log('✅ Item created:', item.title);",
+                  "} else {",
+                  "    console.log('❌ Failed to create item');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Test Item\",\n  \"description\": \"This is an updated test item\",\n  \"price\": 39.99\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/items/{{item_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["items", "{{item_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const item = pm.response.json();",
+                  "    console.log('✅ Item updated:', item.title);",
+                  "} else {",
+                  "    console.log('❌ Failed to update item');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/items/{{item_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["items", "{{item_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Item deleted successfully');",
+                  "} else {",
+                  "    console.log('❌ Failed to delete item');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5Cs Assessment",
+      "item": [
+        {
+          "name": "Get 5Cs Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/questions",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "questions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    console.log('✅ 5Cs Questions retrieved successfully');",
+                  "    console.log('Title:', data.title);",
+                  "    console.log('Total Questions:', data.total_questions);",
+                  "    console.log('Categories:', Object.keys(data.categories));",
+                  "} else {",
+                  "    console.log('❌ Failed to get 5Cs questions');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit 5Cs Assessment - Balanced",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "submit"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    console.log('✅ 5Cs Assessment submitted successfully');",
+                  "    console.log('Total Score:', data.total_score);",
+                  "    console.log('Score Percentage:', data.score_percentage);",
+                  "    console.log('Is Balanced Leader:', data.is_balanced_leader);",
+                  "    console.log('Category Scores:', data.category_scores);",
+                  "    console.log('Growth Focus:', data.growth_focus.categories);",
+                  "    console.log('Intentional Advantage:', data.intentional_advantage.categories);",
+                  "    console.log('Recommendations:', data.recommendations.length);",
+                  "} else {",
+                  "    console.log('❌ Failed to submit 5Cs assessment');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit 5Cs Assessment - High Clarity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [5,5,5,5,5,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Submit 5Cs Assessment - High Consistency",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [3,3,3,3,3,5,5,5,5,5,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Submit 5Cs Assessment - High Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [3,3,3,3,3,3,3,3,3,3,5,5,5,5,5,3,3,3,3,3,3,3,3,3,3]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Submit 5Cs Assessment - High Courage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,5,5,5,5,5,3,3,3,3,3]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Submit 5Cs Assessment - High Curiosity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,5,5,5,5,5]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Get 5Cs Results",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/results/{{user_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "results", "{{user_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "General Assessments",
+      "item": [
+        {
+          "name": "Get All Assessments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments?skip=0&limit=100",
+              "host": ["{{api_base}}"],
+              "path": ["assessments"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const assessments = pm.response.json();",
+                  "    console.log('✅ Retrieved', assessments.length, 'assessments');",
+                  "    if (assessments.length > 0) {",
+                  "        pm.collectionVariables.set('assessment_id', assessments[0].id);",
+                  "    }",
+                  "} else {",
+                  "    console.log('❌ Failed to get assessments');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Assessment (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Assessment\",\n  \"description\": \"This is a test assessment\",\n  \"total_questions\": 5,\n  \"estimated_time_minutes\": 10,\n  \"is_active\": true,\n  \"questions\": [\n    {\n      \"question_text\": \"What is your favorite color?\",\n      \"question_type\": \"multiple_choice\",\n      \"order_index\": 1,\n      \"is_required\": true,\n      \"options\": [\n        {\n          \"option_text\": \"Red\",\n          \"order_index\": 1,\n          \"score_value\": 1\n        },\n        {\n          \"option_text\": \"Blue\",\n          \"order_index\": 2,\n          \"score_value\": 2\n        },\n        {\n          \"option_text\": \"Green\",\n          \"order_index\": 3,\n          \"score_value\": 3\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments",
+              "host": ["{{api_base}}"],
+              "path": ["assessments"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const assessment = pm.response.json();",
+                  "    pm.collectionVariables.set('assessment_id', assessment.id);",
+                  "    console.log('✅ Assessment created:', assessment.title);",
+                  "} else {",
+                  "    console.log('❌ Failed to create assessment');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Assessment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/{{assessment_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "{{assessment_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const assessment = pm.response.json();",
+                  "    console.log('✅ Assessment retrieved:', assessment.title);",
+                  "    console.log('Questions:', assessment.questions.length);",
+                  "} else {",
+                  "    console.log('❌ Failed to get assessment');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Start Assessment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/{{assessment_id}}/start",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "{{assessment_id}}", "start"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const userAssessment = pm.response.json();",
+                  "    console.log('✅ Assessment started');",
+                  "    console.log('Status:', userAssessment.status);",
+                  "} else {",
+                  "    console.log('❌ Failed to start assessment');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Assessment Question",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/{{assessment_id}}/question/1",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "{{assessment_id}}", "question", "1"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    console.log('✅ Question retrieved');",
+                  "    console.log('Question:', data.question.question_text);",
+                  "    console.log('Progress:', data.progress.progress_percentage + '%');",
+                  "} else {",
+                  "    console.log('❌ Failed to get question');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Assessment Progress",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/{{assessment_id}}/progress",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "{{assessment_id}}", "progress"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const progress = pm.response.json();",
+                  "    console.log('✅ Progress retrieved');",
+                  "    console.log('Current Question:', progress.current_question);",
+                  "    console.log('Progress:', progress.progress_percentage + '%');",
+                  "    console.log('Status:', progress.status);",
+                  "} else {",
+                  "    console.log('❌ Failed to get progress');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit Assessment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [\n    {\n      \"question_id\": 1,\n      \"selected_option_id\": 2,\n      \"response_time_seconds\": 30\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/{{assessment_id}}/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "{{assessment_id}}", "submit"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const result = pm.response.json();",
+                  "    console.log('✅ Assessment submitted');",
+                  "    console.log('Score Percentage:', result.score_percentage);",
+                  "    console.log('Completion Time:', result.completion_time_minutes);",
+                  "} else {",
+                  "    console.log('❌ Failed to submit assessment');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Assessment Results",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/{{assessment_id}}/results",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "{{assessment_id}}", "results"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const result = pm.response.json();",
+                  "    console.log('✅ Results retrieved');",
+                  "    console.log('Score Percentage:', result.score_percentage);",
+                  "    console.log('Recommendations:', result.recommendations.length);",
+                  "} else {",
+                  "    console.log('❌ Failed to get results');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Assessment History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/user/history?skip=0&limit=100",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "user", "history"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const history = pm.response.json();",
+                  "    console.log('✅ History retrieved:', history.length, 'entries');",
+                  "} else {",
+                  "    console.log('❌ Failed to get history');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Assessment Statistics (Admin Only)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/{{assessment_id}}/statistics",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "{{assessment_id}}", "statistics"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const stats = pm.response.json();",
+                  "    console.log('✅ Statistics retrieved');",
+                  "} else {",
+                  "    console.log('❌ Failed to get statistics');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Assessment (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/assessments/{{assessment_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "{{assessment_id}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Assessment deleted successfully');",
+                  "} else {",
+                  "    console.log('❌ Failed to delete assessment');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Testing",
+      "item": [
+        {
+          "name": "Login with Invalid Credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "invalid@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "wrongpassword",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_base}}/auth/login/username",
+              "host": ["{{api_base}}"],
+              "path": ["auth", "login", "username"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 401) {",
+                  "    console.log('✅ Expected authentication failure');",
+                  "} else {",
+                  "    console.log('❌ Unexpected response:', pm.response.code);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Access Protected Endpoint Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/users",
+              "host": ["{{api_base}}"],
+              "path": ["users"]
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 401) {",
+                  "    console.log('✅ Expected authentication failure');",
+                  "} else {",
+                  "    console.log('❌ Unexpected response:', pm.response.code);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit 5Cs - Invalid Responses (Too Few)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [3,3,3,3,3]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "submit"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 400) {",
+                  "    console.log('✅ Expected validation error');",
+                  "} else {",
+                  "    console.log('❌ Unexpected response:', pm.response.code);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit 5Cs - Invalid Response Values",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,6]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "submit"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 400) {",
+                  "    console.log('✅ Expected validation error');",
+                  "} else {",
+                  "    console.log('❌ Unexpected response:', pm.response.code);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit 5Cs - No Authentication",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"responses\": [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/assessments/5cs/submit",
+              "host": ["{{api_base}}"],
+              "path": ["assessments", "5cs", "submit"]
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 401) {",
+                  "    console.log('✅ Expected authentication failure');",
+                  "} else {",
+                  "    console.log('❌ Unexpected response:', pm.response.code);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
