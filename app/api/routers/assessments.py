@@ -32,6 +32,24 @@ def get_assessments_for_participant(
         data=assessments
     )
 
+
+@router.get("/", response_model=APIResponse)
+def get_all_assessments(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Get all assessments sorted by category (Admin only).
+    """
+    assessments = crud.get_all_assessments_sorted_by_category(db)
+    
+    return APIResponse(
+        success=True,
+        message="All assessments retrieved successfully",
+        data=assessments
+    )
+
 @router.post("/", response_model=APIResponse)
 def create_assessment(
     *,

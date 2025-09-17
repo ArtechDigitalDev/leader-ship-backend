@@ -65,3 +65,21 @@ def get_assessments_by_category(db: Session) -> dict:
     # Convert to list format
     result = list(categories.values())
     return result
+
+
+def get_all_assessments_sorted_by_category(db: Session) -> list:
+    """Get all assessments sorted by category for admins"""
+    assessments = db.query(Assessment).order_by(Assessment.category, Assessment.id).all()
+    
+    result = []
+    for assessment in assessments:
+        result.append({
+            "id": assessment.id,
+            "category": assessment.category,
+            "question": assessment.question,
+            "is_active": assessment.is_active,
+            "created_at": assessment.created_at,
+            "updated_at": assessment.updated_at
+        })
+    
+    return result
