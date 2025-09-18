@@ -201,18 +201,25 @@ def update_daily_lesson(
             data=None
         )
     
-    daily_lesson = crud.update_daily_lesson(db, db_obj=daily_lesson, obj_in=daily_lesson_in)
-    return APIResponse(
-        success=True,
-        message="Daily lesson updated successfully",
-        data={
-            "id": daily_lesson.id,
-            "week_id": daily_lesson.week_id,
-            "day_number": daily_lesson.day_number,
-            "title": daily_lesson.title,
-            "updated_at": daily_lesson.updated_at
-        }
-    )
+    try:
+        daily_lesson = crud.update_daily_lesson(db, db_obj=daily_lesson, obj_in=daily_lesson_in)
+        return APIResponse(
+            success=True,
+            message="Daily lesson updated successfully",
+            data={
+                "id": daily_lesson.id,
+                "week_id": daily_lesson.week_id,
+                "day_number": daily_lesson.day_number,
+                "title": daily_lesson.title,
+                "updated_at": daily_lesson.updated_at
+            }
+        )
+    except ValueError as e:
+        return APIResponse(
+            success=False,
+            message=str(e),
+            data=None
+        )
 
 
 @router.delete("/{daily_lesson_id}", response_model=APIResponse)

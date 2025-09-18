@@ -73,18 +73,38 @@ def update_daily_lesson(
     else:
         update_data = obj_in.dict(exclude_unset=True)
     
-    # Handle nested objects
+    # Check if week_id or day_number is being updated
+    new_week_id = update_data.get('week_id', db_obj.week_id)
+    new_day_number = update_data.get('day_number', db_obj.day_number)
+    
+    # If week_id or day_number is changing, check for duplicates
+    if (update_data.get('week_id') is not None or update_data.get('day_number') is not None):
+        existing_lesson = get_daily_lesson_by_week_and_day(
+            db, week_id=new_week_id, day_number=new_day_number
+        )
+        if existing_lesson and existing_lesson.id != db_obj.id:
+            # Get week title for better error message
+            from app.models.week import Week
+            week = db.query(Week).filter(Week.id == new_week_id).first()
+            week_title = week.title if week else f"Week ID {new_week_id}"
+            raise ValueError(f"Daily lesson for {week_title}, day {new_day_number} already exists. Please choose a different day number.")
+    
+    # Handle nested objects - convert Pydantic models to dict if needed
     if "daily_tip" in update_data and update_data["daily_tip"] is not None:
-        update_data["daily_tip"] = update_data["daily_tip"].dict()
+        if hasattr(update_data["daily_tip"], 'dict'):
+            update_data["daily_tip"] = update_data["daily_tip"].dict()
     
     if "swipe_cards" in update_data and update_data["swipe_cards"] is not None:
-        update_data["swipe_cards"] = [card.dict() for card in update_data["swipe_cards"]]
+        if update_data["swipe_cards"] and hasattr(update_data["swipe_cards"][0], 'dict'):
+            update_data["swipe_cards"] = [card.dict() for card in update_data["swipe_cards"]]
     
     if "scenario" in update_data and update_data["scenario"] is not None:
-        update_data["scenario"] = update_data["scenario"].dict()
+        if hasattr(update_data["scenario"], 'dict'):
+            update_data["scenario"] = update_data["scenario"].dict()
     
     if "go_deeper" in update_data and update_data["go_deeper"] is not None:
-        update_data["go_deeper"] = [item.dict() for item in update_data["go_deeper"]]
+        if update_data["go_deeper"] and hasattr(update_data["go_deeper"][0], 'dict'):
+            update_data["go_deeper"] = [item.dict() for item in update_data["go_deeper"]]
     
     for field, value in update_data.items():
         setattr(db_obj, field, value)
