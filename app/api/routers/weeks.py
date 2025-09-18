@@ -210,16 +210,16 @@ def delete_week(
     """
     Delete week (Admin only).
     """
-    success = crud.delete_week(db, week_id=week_id)
-    if not success:
+    try:
+        success = crud.delete_week(db, week_id=week_id)
+        return APIResponse(
+            success=True,
+            message="Week deleted successfully",
+            data={"deleted_id": week_id}
+        )
+    except ValueError as e:
         return APIResponse(
             success=False,
-            message="Week not found",
+            message=str(e),
             data=None
         )
-    
-    return APIResponse(
-        success=True,
-        message="Week deleted successfully",
-        data={"deleted_id": week_id}
-    )

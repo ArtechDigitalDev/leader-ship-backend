@@ -23,13 +23,13 @@ def get_daily_lesson_by_week_and_day(db: Session, *, week_id: int, day_number: i
 def get_daily_lessons_by_week(db: Session, *, week_id: int) -> List[DailyLesson]:
     """Get all daily lessons for a specific week."""
     from sqlalchemy.orm import joinedload
-    return db.query(DailyLesson).options(joinedload(DailyLesson.week)).filter(DailyLesson.week_id == week_id).all()
+    return db.query(DailyLesson).options(joinedload(DailyLesson.week)).filter(DailyLesson.week_id == week_id).order_by(DailyLesson.day_number.asc()).all()
 
 
 def get_daily_lessons(db: Session) -> List[DailyLesson]:
     """Get all daily lessons."""
     from sqlalchemy.orm import joinedload
-    return db.query(DailyLesson).options(joinedload(DailyLesson.week)).all()
+    return db.query(DailyLesson).options(joinedload(DailyLesson.week)).order_by(DailyLesson.day_number.asc()).all()
 
 
 def create_daily_lesson(db: Session, *, obj_in: DailyLessonCreate) -> DailyLesson:

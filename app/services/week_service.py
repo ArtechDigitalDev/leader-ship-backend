@@ -52,8 +52,15 @@ def update_week(db: Session, *, db_obj: Week, obj_in: WeekUpdate) -> Week:
 def delete_week(db: Session, *, week_id: int) -> bool:
     """Delete week"""
     week = get_week(db, week_id=week_id)
-    if week:
-        db.delete(week)
-        db.commit()
-        return True
-    return False
+    if not week:
+        raise ValueError("Week not found")
+    
+    # Check if week has daily lessons
+    from app.models.daily_lesson import DailyLesson
+    daily_lessons_count = db.query(DailyLesson).filter(DailyLesson.week_id == week_id).count()
+    if daily_lessons_count > 0:
+        raise ValueError(f"Cannot delete week '{week.title}' because it has {daily_lessons_count} daily lesson(s). Please delete the daily lessons first.")
+    
+    db.delete(week)
+    db.commit()
+    return True
