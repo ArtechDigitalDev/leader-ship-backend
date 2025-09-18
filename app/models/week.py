@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, JSON
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -15,3 +16,6 @@ class Week(Base):
     weekly_challenge = Column(JSON, nullable=True)  # JSON structure for challenge details
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationship with DailyLesson
+    daily_lessons = relationship("DailyLesson", back_populates="week")

@@ -3,12 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import settings
-from app.api.routers import users, items, assessments, auth, admin, weeks
+from app.api.routers import users, items, assessments, auth, admin, weeks, daily_lessons
 from app.utils.response import APIException, api_exception_handler
 
 # Import models to ensure they are registered with SQLAlchemy
 from app.models import User, Item, Assessment
 from app.models.week import Week
+from app.models.daily_lesson import DailyLesson
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -47,6 +48,7 @@ app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["u
 app.include_router(items.router, prefix=f"{settings.API_V1_STR}/items", tags=["items"])
 app.include_router(assessments.router, prefix=f"{settings.API_V1_STR}/assessments", tags=["assessments"])
 app.include_router(weeks.router, prefix=f"{settings.API_V1_STR}/weeks", tags=["weeks"])
+app.include_router(daily_lessons.router, prefix=f"{settings.API_V1_STR}/daily-lessons", tags=["daily-lessons"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
 
 

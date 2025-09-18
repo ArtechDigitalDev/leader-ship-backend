@@ -7,7 +7,7 @@ class WeeklyChallengeBase(BaseModel):
     challenge_title: str
     action: str
     why_details: List[str]
-    validation_step: str
+    validation_step: Optional[str] = None
 
 
 class WeekBase(BaseModel):
