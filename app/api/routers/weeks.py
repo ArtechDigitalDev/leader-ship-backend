@@ -100,6 +100,10 @@ def get_weeks_by_topic(
     
     weeks_data = []
     for week in weeks:
+        # Count daily lessons for this week
+        from app.models.daily_lesson import DailyLesson
+        daily_lessons_count = db.query(DailyLesson).filter(DailyLesson.week_id == week.id).count()
+        
         weeks_data.append({
             "id": week.id,
             "topic": week.topic,
@@ -107,6 +111,7 @@ def get_weeks_by_topic(
             "title": week.title,
             "intro": week.intro,
             "weekly_challenge": week.weekly_challenge,
+            "daily_lessons_count": daily_lessons_count,
             "created_at": week.created_at,
             "updated_at": week.updated_at
         })
