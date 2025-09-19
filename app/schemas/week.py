@@ -12,7 +12,7 @@ class WeeklyChallengeBase(BaseModel):
 
 class WeekBase(BaseModel):
     topic: str = Field(..., description="Five categories: Clarity, Consistency, Connection, Courage, Curiosity")
-    week_number: int = Field(..., ge=1, le=7, description="Week number from 1 to 7")
+    week_number: int = Field(..., ge=1, description="Week number (positive integer)")
     title: str
     intro: str
     weekly_challenge: Optional[WeeklyChallengeBase] = None
@@ -24,10 +24,14 @@ class WeekCreate(WeekBase):
 
 class WeekUpdate(BaseModel):
     topic: Optional[str] = None
-    week_number: Optional[int] = Field(None, ge=1, le=7)
+    week_number: Optional[int] = Field(None, ge=1)
     title: Optional[str] = None
     intro: Optional[str] = None
     weekly_challenge: Optional[WeeklyChallengeBase] = None
+    
+    class Config:
+        # Allow setting fields to None for full replacement
+        allow_population_by_field_name = True
 
 
 class WeekResponse(WeekBase):

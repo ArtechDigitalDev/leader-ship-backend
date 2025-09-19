@@ -39,10 +39,14 @@ def get_all_weeks(db: Session) -> List[Week]:
 
 
 def update_week(db: Session, *, db_obj: Week, obj_in: WeekUpdate) -> Week:
-    """Update week"""
-    update_data = obj_in.dict(exclude_unset=True)
+    """Update week - Full replacement of provided fields"""
+    # Get all fields from the update object, including None values
+    update_data = obj_in.dict()
+    
+    # Full replacement: set all provided fields (including None values)
     for field, value in update_data.items():
         setattr(db_obj, field, value)
+    
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
