@@ -56,6 +56,34 @@ def read_daily_lessons(
     else:
         daily_lessons = crud.get_daily_lessons(db)
     
+    # Get week information when week_id is provided
+    week_info = None
+    if week_id:
+        if daily_lessons:
+            # Get week info from first lesson
+            first_lesson = daily_lessons[0]
+            week_info = {
+                "id": first_lesson.week.id,
+                "topic": first_lesson.week.topic,
+                "week_number": first_lesson.week.week_number,
+                "title": first_lesson.week.title,
+                "intro": first_lesson.week.intro,
+                "weekly_challenge": first_lesson.week.weekly_challenge
+            }
+        else:
+            # No lessons but week exists, get week info directly
+            from app.models.week import Week
+            week = db.query(Week).filter(Week.id == week_id).first()
+            if week:
+                week_info = {
+                    "id": week.id,
+                    "topic": week.topic,
+                    "week_number": week.week_number,
+                    "title": week.title,
+                    "intro": week.intro,
+                    "weekly_challenge": week.weekly_challenge
+                }
+    
     return APIResponse(
         success=True,
         message="Daily lessons retrieved successfully",
@@ -63,14 +91,6 @@ def read_daily_lessons(
             {
                 "id": lesson.id,
                 "week_id": lesson.week_id,
-                "week": {
-                    "id": lesson.week.id,
-                    "topic": lesson.week.topic,
-                    "week_number": lesson.week.week_number,
-                    "title": lesson.week.title,
-                    "intro": lesson.week.intro,
-                    "weekly_challenge": lesson.week.weekly_challenge
-                },
                 "day_number": lesson.day_number,
                 "title": lesson.title,
                 "daily_tip": lesson.daily_tip,
@@ -83,7 +103,8 @@ def read_daily_lessons(
                 "updated_at": lesson.updated_at
             }
             for lesson in daily_lessons
-        ]
+        ],
+        meta=week_info
     )
 
 
@@ -105,20 +126,22 @@ def read_daily_lesson(
             data=None
         )
     
+    # Get week information
+    week_info = {
+        "id": daily_lesson.week.id,
+        "topic": daily_lesson.week.topic,
+        "week_number": daily_lesson.week.week_number,
+        "title": daily_lesson.week.title,
+        "intro": daily_lesson.week.intro,
+        "weekly_challenge": daily_lesson.week.weekly_challenge
+    }
+    
     return APIResponse(
         success=True,
         message="Daily lesson retrieved successfully",
         data={
             "id": daily_lesson.id,
             "week_id": daily_lesson.week_id,
-            "week": {
-                "id": daily_lesson.week.id,
-                "topic": daily_lesson.week.topic,
-                "week_number": daily_lesson.week.week_number,
-                "title": daily_lesson.week.title,
-                "intro": daily_lesson.week.intro,
-                "weekly_challenge": daily_lesson.week.weekly_challenge
-            },
             "day_number": daily_lesson.day_number,
             "title": daily_lesson.title,
             "daily_tip": daily_lesson.daily_tip,
@@ -129,7 +152,8 @@ def read_daily_lesson(
             "leader_win": daily_lesson.leader_win,
             "created_at": daily_lesson.created_at,
             "updated_at": daily_lesson.updated_at
-        }
+        },
+        meta=week_info
     )
 
 
@@ -154,20 +178,22 @@ def read_daily_lesson_by_week_and_day(
             data=None
         )
     
+    # Get week information
+    week_info = {
+        "id": daily_lesson.week.id,
+        "topic": daily_lesson.week.topic,
+        "week_number": daily_lesson.week.week_number,
+        "title": daily_lesson.week.title,
+        "intro": daily_lesson.week.intro,
+        "weekly_challenge": daily_lesson.week.weekly_challenge
+    }
+    
     return APIResponse(
         success=True,
         message="Daily lesson retrieved successfully",
         data={
             "id": daily_lesson.id,
             "week_id": daily_lesson.week_id,
-            "week": {
-                "id": daily_lesson.week.id,
-                "topic": daily_lesson.week.topic,
-                "week_number": daily_lesson.week.week_number,
-                "title": daily_lesson.week.title,
-                "intro": daily_lesson.week.intro,
-                "weekly_challenge": daily_lesson.week.weekly_challenge
-            },
             "day_number": daily_lesson.day_number,
             "title": daily_lesson.title,
             "daily_tip": daily_lesson.daily_tip,
@@ -178,7 +204,8 @@ def read_daily_lesson_by_week_and_day(
             "leader_win": daily_lesson.leader_win,
             "created_at": daily_lesson.created_at,
             "updated_at": daily_lesson.updated_at
-        }
+        },
+        meta=week_info
     )
 
 
