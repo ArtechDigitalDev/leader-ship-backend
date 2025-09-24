@@ -71,7 +71,7 @@ def update_daily_lesson(
     if isinstance(obj_in, dict):
         update_data = obj_in
     else:
-        update_data = obj_in.dict(exclude_unset=True)
+        update_data = obj_in.dict(exclude_unset=False)
     
     # Check if week_id or day_number is being updated
     new_week_id = update_data.get('week_id', db_obj.week_id)
