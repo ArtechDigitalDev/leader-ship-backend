@@ -24,8 +24,22 @@ def read_users(
     Retrieve users.
     """
     users = crud.get_multi(db)
-    # Convert User objects to dictionaries for serialization
-    users_data = [jsonable_encoder(user) for user in users]
+    # Convert User objects to dictionaries with only required fields
+    users_data = []
+    for user in users:
+        user_dict = {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "full_name": user.full_name,
+            "mobile_number": user.mobile_number,
+            "role": user.role,
+            "is_active": user.is_active,
+            "created_at": user.created_at,
+            "updated_at": user.updated_at
+        }
+        users_data.append(user_dict)
+    
     return APIResponse(
         success=True,
         message="Users retrieved successfully",
