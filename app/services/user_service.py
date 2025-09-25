@@ -24,7 +24,7 @@ def get_by_mobile_number(db: Session, *, mobile_number: str) -> Optional[User]:
 
 
 def get_multi(db: Session) -> list[User]:
-    return db.query(User).all()
+    return db.query(User).order_by(User.created_at.asc()).all()
 
 
 def create(db: Session, *, obj_in: UserCreate) -> User:

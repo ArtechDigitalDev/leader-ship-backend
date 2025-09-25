@@ -125,13 +125,13 @@ def read_user_by_id(
     return user
 
 
-@router.put("/{user_id}", response_model=User)
+@router.put("/{user_id}", response_model=APIResponse)
 def update_user(
     *,
     db: Session = Depends(deps.get_db),
     user_id: int,
     user_in: UserUpdate,
-    current_user: UserModel = Depends(deps.get_current_active_superuser),
+    current_user: UserModel = Depends(deps.get_current_admin_or_coach_user),
 ) -> Any:
     """
     Update a user.
@@ -142,8 +142,20 @@ def update_user(
             status_code=404,
             detail="The user with this id does not exist in the system",
         )
-    user = crud.update(db, db_obj=user, obj_in=user_in)
-    return user
+    updated_user = crud.update(db, db_obj=user, obj_in=user_in)
+    
+    # Convert User object to dictionary with only required fields
+    user_data = {
+        "id": updated_user.id,
+        "role": updated_user.role,
+        "updated_at": updated_user.updated_at
+    }
+    
+    return APIResponse(
+        success=True,
+        message="User updated successfully",
+        data=user_data
+    )
 
 
 @router.delete("/{user_id}", response_model=User)
