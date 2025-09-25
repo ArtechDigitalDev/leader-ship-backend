@@ -23,10 +23,8 @@ def get_by_mobile_number(db: Session, *, mobile_number: str) -> Optional[User]:
     return db.query(User).filter(User.mobile_number == mobile_number).first()
 
 
-def get_multi(
-    db: Session, *, skip: int = 0, limit: int = 100
-) -> list[User]:
-    return db.query(User).offset(skip).limit(limit).all()
+def get_multi(db: Session) -> list[User]:
+    return db.query(User).all()
 
 
 def create(db: Session, *, obj_in: UserCreate) -> User:

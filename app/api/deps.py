@@ -91,3 +91,39 @@ def get_current_admin_user(
             success=False
         )
     return current_user
+
+
+def get_current_coach_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not crud.is_active(current_user):
+        raise APIException(
+            status_code=400,
+            message="Inactive user",
+            success=False
+        )
+    if current_user.role != "coach":
+        raise APIException(
+            status_code=403,
+            message="Coach access required",
+            success=False
+        )
+    return current_user
+
+
+def get_current_admin_or_coach_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if not crud.is_active(current_user):
+        raise APIException(
+            status_code=400,
+            message="Inactive user",
+            success=False
+        )
+    if current_user.role not in ["admin", "coach"]:
+        raise APIException(
+            status_code=403,
+            message="Admin or Coach access required",
+            success=False
+        )
+    return current_user

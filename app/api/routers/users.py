@@ -10,22 +10,27 @@ from app.models.user import User as UserModel
 from app.schemas.user import User, UserCreate, UserUpdate
 from app.api import deps
 from app.core.config import settings
+from app.utils.response import APIResponse
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[User])
+@router.get("/", response_model=APIResponse)
 def read_users(
     db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_user: UserModel = Depends(deps.get_current_active_superuser),
+    current_user: UserModel = Depends(deps.get_current_admin_or_coach_user),
 ) -> Any:
     """
     Retrieve users.
     """
-    users = crud.get_multi(db, skip=skip, limit=limit)
-    return users
+    users = crud.get_multi(db)
+    # Convert User objects to dictionaries for serialization
+    users_data = [jsonable_encoder(user) for user in users]
+    return APIResponse(
+        success=True,
+        message="Users retrieved successfully",
+        data=users_data
+    )
 
 
 @router.post("/", response_model=User)
