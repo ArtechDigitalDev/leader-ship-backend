@@ -4,7 +4,6 @@ from sqlalchemy.sql import func
 import enum
 
 from app.core.database import Base
-from app.models.item import Item
 
 
 class UserRole(str, enum.Enum):
@@ -45,7 +44,7 @@ class User(Base):
     role_approved_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    items = relationship("Item", back_populates="owner")
+    # items = relationship("Item", back_populates="owner")
     # assessments = relationship("UserAssessment", back_populates="user", lazy="dynamic")
     
     def is_admin(self) -> bool:

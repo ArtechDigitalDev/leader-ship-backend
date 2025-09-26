@@ -3,11 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import settings
-from app.api.routers import users, items, assessments, auth, admin, weeks, daily_lessons
+from app.api.routers import users, assessments, auth, admin, weeks, daily_lessons
 from app.utils.response import APIException, api_exception_handler
 
 # Import models to ensure they are registered with SQLAlchemy
-from app.models import User, Item, Assessment
+from app.models import User, Assessment
 from app.models.week import Week
 from app.models.daily_lesson import DailyLesson
 
@@ -24,14 +24,7 @@ app.add_exception_handler(APIException, api_exception_handler)
 # Set up CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8080",
-        "https://leadership-development-platform-self.vercel.app",
-        "http://localhost:3000",
-        "http://127.0.0.1:8080",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000"
-    ],
+    allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -46,7 +39,7 @@ app.add_middleware(
 # Include API routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
-app.include_router(items.router, prefix=f"{settings.API_V1_STR}/items", tags=["items"])
+# app.include_router(items.router, prefix=f"{settings.API_V1_STR}/items", tags=["items"])
 app.include_router(assessments.router, prefix=f"{settings.API_V1_STR}/assessments", tags=["assessments"])
 app.include_router(weeks.router, prefix=f"{settings.API_V1_STR}/weeks", tags=["weeks"])
 app.include_router(daily_lessons.router, prefix=f"{settings.API_V1_STR}/daily-lessons", tags=["daily-lessons"])

@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # Database - Production URL from Render
+    # Database - Neon PostgreSQL
     DATABASE_URL: Optional[str] = None
     
     # PostgreSQL specific settings (for development)
