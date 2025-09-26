@@ -14,5 +14,6 @@ black
 isort
 flake8
 mypy
-passlib[bcrypt]
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 psycopg2-binary
