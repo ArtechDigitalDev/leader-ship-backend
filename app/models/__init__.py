@@ -2,6 +2,7 @@
 
 from .user import User
 from .assessment import Assessment
+from .assessment_result import AssessmentResult
 from .week import Week
 from .daily_lesson import DailyLesson
 
@@ -12,6 +13,7 @@ __all__ = [
     "Base",
     "User",
     "Assessment",
+    "AssessmentResult",
     "Week",
     "DailyLesson"
 ]
