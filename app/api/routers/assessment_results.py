@@ -6,6 +6,8 @@ from app.core.database import get_db
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.models.assessment_result import AssessmentResult
+from app.models.week import Week
+from app.models.daily_lesson import DailyLesson
 from app.schemas.assessment_result import (
     AssessmentResultResponse, 
     AssessmentSubmission, 
@@ -13,6 +15,7 @@ from app.schemas.assessment_result import (
     AssessmentResultCreate,
     AssessmentResultUpdate
 )
+from app.schemas.category_stats import CategoryStats, CategoryStatsSummary
 from app.services.assessment_result_service import AssessmentResultService
 from app.utils.response import APIResponse
 
@@ -75,35 +78,6 @@ async def get_latest_assessment_result(
     db: Session = Depends(get_db)
 ):
     """Get current user's latest assessment result"""
-    try:
-        service = AssessmentResultService(db)
-        result = service.get_latest_assessment_result(current_user.id)
-        
-        if not result:
-            return APIResponse(
-                success=True,
-                message="No assessment results found",
-                data=None
-            )
-        
-        return APIResponse(
-            success=True,
-            message="Latest assessment result retrieved successfully",
-            data=AssessmentResultResponse.from_orm(result)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to retrieve latest assessment result: {str(e)}"
-        )
-
-
-@router.get("/my-result", response_model=APIResponse)
-async def get_my_latest_result(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get current user's latest assessment result (alternative endpoint)"""
     try:
         service = AssessmentResultService(db)
         result = service.get_latest_assessment_result(current_user.id)
@@ -296,4 +270,59 @@ async def delete_assessment_result(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to delete assessment result: {str(e)}"
+        )
+
+
+# Category Statistics Endpoints
+
+@router.get("/categories/stats", response_model=APIResponse)
+async def get_category_statistics(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get statistics for all 5 categories (weeks and lessons count)"""
+    try:
+        service = AssessmentResultService(db)
+        stats = service.get_category_statistics()
+        
+        return APIResponse(
+            success=True,
+            message="Category statistics retrieved successfully",
+            data=stats
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to retrieve category statistics: {str(e)}"
+        )
+
+
+@router.get("/categories/{category_name}/stats", response_model=APIResponse)
+async def get_category_statistics_by_name(
+    category_name: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get statistics for a specific category"""
+    try:
+        service = AssessmentResultService(db)
+        stats = service.get_category_statistics_by_name(category_name)
+        
+        if not stats:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Category '{category_name}' not found"
+            )
+        
+        return APIResponse(
+            success=True,
+            message=f"Category statistics for '{category_name}' retrieved successfully",
+            data=stats
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to retrieve category statistics: {str(e)}"
         )

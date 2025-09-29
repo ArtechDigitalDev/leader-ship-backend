@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from app.models.assessment_result import AssessmentResult
+from app.models.week import Week
+from app.models.daily_lesson import DailyLesson
 from app.schemas.assessment_result import AssessmentResultCreate, AssessmentResultUpdate
 
 
@@ -110,3 +112,62 @@ class AssessmentResultService:
         """Get the user's current intentional advantage from their latest assessment"""
         latest_result = self.get_latest_assessment_result(user_id)
         return latest_result.intentional_advantage if latest_result else None
+
+    def get_category_statistics(self) -> Dict[str, Any]:
+        """Get statistics for all 5 categories from weeks and daily_lessons tables"""
+        categories = ['Clarity', 'Consistency', 'Connection', 'Courage', 'Curiosity']
+        category_stats = []
+        total_weeks = 0
+        total_lessons = 0
+        
+        for category in categories:
+            # Get weeks for this category
+            weeks = self.db.query(Week).filter(Week.topic == category).all()
+            week_count = len(weeks)
+            
+            # Get total lessons for this category
+            lesson_count = 0
+            
+            for week in weeks:
+                # Count lessons for this week
+                lessons = self.db.query(DailyLesson).filter(DailyLesson.week_id == week.id).all()
+                lesson_count += len(lessons)
+            
+            category_stats.append({
+                "category_name": category,
+                "total_weeks": week_count,
+                "total_lessons": lesson_count
+            })
+            
+            total_weeks += week_count
+            total_lessons += lesson_count
+        
+        return {
+            "categories": category_stats,
+            "total_categories": len(categories),
+            "total_weeks_across_categories": total_weeks,
+            "total_lessons_across_categories": total_lessons
+        }
+
+    def get_category_statistics_by_name(self, category_name: str) -> Optional[Dict[str, Any]]:
+        """Get statistics for a specific category"""
+        # Get weeks for this category
+        weeks = self.db.query(Week).filter(Week.topic == category_name).all()
+        week_count = len(weeks)
+        
+        # Get total lessons for this category
+        lesson_count = 0
+        
+        for week in weeks:
+            # Count lessons for this week
+            lessons = self.db.query(DailyLesson).filter(DailyLesson.week_id == week.id).all()
+            lesson_count += len(lessons)
+        
+        if week_count == 0:
+            return None
+            
+        return {
+            "category_name": category_name,
+            "total_weeks": week_count,
+            "total_lessons": lesson_count
+        }
