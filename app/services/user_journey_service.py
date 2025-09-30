@@ -36,9 +36,9 @@ class UserJourneyService:
         user_journey = UserJourney(
             user_id=journey_data.user_id,
             assessment_result_id=journey_data.assessment_result_id,
-            growth_focus_category=assessment_result.growth_focus.lower(),
-            intentional_advantage_category=assessment_result.intentional_advantage.lower(),
-            current_category=assessment_result.growth_focus.lower(),
+            growth_focus_category=assessment_result.growth_focus.capitalize(),
+            intentional_advantage_category=assessment_result.intentional_advantage.capitalize(),
+            current_category=assessment_result.growth_focus.capitalize(),
             status=JourneyStatus.ACTIVE
         )
         
@@ -49,14 +49,14 @@ class UserJourneyService:
         self._initialize_lessons_for_category(
             user_journey.id, 
             journey_data.user_id, 
-            assessment_result.growth_focus.lower()
+            assessment_result.growth_focus.capitalize()
         )
         
         # Create or update user progress
         self._create_or_update_user_progress(
             journey_data.user_id, 
             user_journey.id, 
-            assessment_result.growth_focus.lower()
+            assessment_result.growth_focus.capitalize()
         )
         
         self.db.commit()
@@ -107,7 +107,7 @@ class UserJourneyService:
         user_journey = self.get_user_journey(user_id, journey_id)
         
         # Get all categories in order
-        categories = ['clarity', 'consistency', 'connection', 'courage', 'curiosity']
+        categories = ['Clarity', 'Consistency', 'Connection', 'Courage', 'Curiosity']
         current_index = categories.index(user_journey.current_category)
         
         # Update journey progress
@@ -138,8 +138,8 @@ class UserJourneyService:
     def _initialize_lessons_for_category(self, journey_id: int, user_id: int, category: str):
         """Initialize user lessons for a specific category"""
         
-        # Get all weeks for this category
-        weeks = self.db.query(Week).filter(Week.topic == category).order_by(Week.week_number).all()
+        # Get all weeks for this category (case-insensitive)
+        weeks = self.db.query(Week).filter(Week.topic.ilike(category)).order_by(Week.week_number).all()
         
         lesson_count = 0
         for week in weeks:

@@ -209,14 +209,14 @@ class UserProgressService:
     def _get_total_lessons_in_category(self, category: str) -> int:
         """Get total number of lessons in a category"""
         return self.db.query(DailyLesson).join(Week).filter(
-            Week.topic == category
+            Week.topic.ilike(category)
         ).count()
 
     def _get_completed_lessons_in_category(self, user_id: int, category: str) -> int:
         """Get number of completed lessons in a category"""
         return self.db.query(UserLesson).join(DailyLesson).join(Week).filter(
             UserLesson.user_id == user_id,
-            Week.topic == category,
+            Week.topic.ilike(category),
             UserLesson.status == LessonStatus.COMPLETED
         ).count()
 

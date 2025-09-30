@@ -16,6 +16,11 @@ class UserJourneyCreate(UserJourneyBase):
     assessment_result_id: int
 
 
+class UserJourneyStartRequest(BaseModel):
+    """Request schema for starting a new journey"""
+    assessment_result_id: int
+
+
 class UserJourneyUpdate(BaseModel):
     current_category: Optional[str] = None
     status: Optional[JourneyStatus] = None

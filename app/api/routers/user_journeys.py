@@ -9,7 +9,8 @@ from app.schemas.user_journey import (
     UserJourneyCreate,
     UserJourneyUpdate,
     UserJourney,
-    UserJourneyWithProgress
+    UserJourneyWithProgress,
+    UserJourneyStartRequest
 )
 from app.utils.response import APIException
 
@@ -18,7 +19,7 @@ router = APIRouter(prefix="/user-journeys", tags=["user-journeys"])
 
 @router.post("/start", response_model=UserJourney)
 async def start_user_journey(
-    assessment_result_id: int,
+    request: UserJourneyStartRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -37,7 +38,7 @@ async def start_user_journey(
         
         journey_data = UserJourneyCreate(
             user_id=current_user.id,
-            assessment_result_id=assessment_result_id,
+            assessment_result_id=request.assessment_result_id,
             growth_focus_category="",  # Will be set from assessment
             intentional_advantage_category="",  # Will be set from assessment
             current_category=""  # Will be set from assessment

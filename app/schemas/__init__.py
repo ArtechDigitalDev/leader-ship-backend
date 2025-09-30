@@ -17,7 +17,8 @@ from .user_journey import (
     UserJourneyCreate,
     UserJourneyUpdate,
     UserJourney,
-    UserJourneyWithProgress
+    UserJourneyWithProgress,
+    UserJourneyStartRequest
 )
 
 from .user_lesson import (

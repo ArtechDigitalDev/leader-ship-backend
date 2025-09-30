@@ -49,7 +49,7 @@ async def get_user_lessons_by_category(
 ):
     """Get all user lessons for a specific category"""
     service = UserLessonService(db)
-    lessons = service.get_user_lessons_by_category(current_user.id, category.lower())
+    lessons = service.get_user_lessons_by_category(current_user.id, category.capitalize())
     
     # Enhance with lesson details
     enhanced_lessons = []

@@ -35,7 +35,7 @@ class UserLessonService:
         return self.db.query(UserLesson).join(DailyLesson).join(Week).filter(
             and_(
                 UserLesson.user_id == user_id,
-                Week.topic == category
+                Week.topic.ilike(category)
             )
         ).order_by(Week.week_number, DailyLesson.day_number).all()
 
