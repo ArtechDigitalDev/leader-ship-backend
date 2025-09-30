@@ -5,6 +5,9 @@ from .assessment import Assessment
 from .assessment_result import AssessmentResult
 from .week import Week
 from .daily_lesson import DailyLesson
+from .user_journey import UserJourney
+from .user_lesson import UserLesson
+from .user_progress import UserProgress
 
 # Import Base from database
 from app.core.database import Base
@@ -15,5 +18,8 @@ __all__ = [
     "Assessment",
     "AssessmentResult",
     "Week",
-    "DailyLesson"
+    "DailyLesson",
+    "UserJourney",
+    "UserLesson",
+    "UserProgress"
 ]

@@ -33,6 +33,7 @@ class AssessmentResult(Base):
     
     # Relationships
     user = relationship("User", back_populates="assessment_results")
+    user_journeys = relationship("UserJourney", back_populates="assessment_result")
     
     @staticmethod
     def calculate_scores(responses: dict):

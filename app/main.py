@@ -3,11 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import settings
-from app.api.routers import users, assessments, auth, admin, weeks, daily_lessons, assessment_results
+from app.api.routers import users, assessments, auth, admin, weeks, daily_lessons, assessment_results, user_journeys, user_lessons, user_progress
 from app.utils.response import APIException, api_exception_handler
 
 # Import models to ensure they are registered with SQLAlchemy
-from app.models import User, Assessment, AssessmentResult
+from app.models import User, Assessment, AssessmentResult, UserJourney, UserLesson, UserProgress
 from app.models.week import Week
 from app.models.daily_lesson import DailyLesson
 
@@ -45,6 +45,11 @@ app.include_router(assessment_results.router, prefix=f"{settings.API_V1_STR}", t
 app.include_router(weeks.router, prefix=f"{settings.API_V1_STR}/weeks", tags=["weeks"])
 app.include_router(daily_lessons.router, prefix=f"{settings.API_V1_STR}/daily-lessons", tags=["daily-lessons"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
+
+# User Journey System routers
+app.include_router(user_journeys.router, prefix=f"{settings.API_V1_STR}", tags=["user-journeys"])
+app.include_router(user_lessons.router, prefix=f"{settings.API_V1_STR}", tags=["user-lessons"])
+app.include_router(user_progress.router, prefix=f"{settings.API_V1_STR}", tags=["user-progress"])
 
 
 @app.get("/")

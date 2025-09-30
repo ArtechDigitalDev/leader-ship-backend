@@ -23,3 +23,4 @@ class DailyLesson(Base):
 
     # Relationship with Week
     week = relationship("Week", back_populates="daily_lessons")
+    user_lessons = relationship("UserLesson", back_populates="daily_lesson")

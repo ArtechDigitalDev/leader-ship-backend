@@ -47,6 +47,9 @@ class User(Base):
     # items = relationship("Item", back_populates="owner")
     # assessments = relationship("UserAssessment", back_populates="user", lazy="dynamic")
     assessment_results = relationship("AssessmentResult", back_populates="user")
+    user_journeys = relationship("UserJourney", back_populates="user")
+    user_lessons = relationship("UserLesson", back_populates="user")
+    user_progress = relationship("UserProgress", back_populates="user", uselist=False)
     
     def is_admin(self) -> bool:
         """Check if user is admin"""
