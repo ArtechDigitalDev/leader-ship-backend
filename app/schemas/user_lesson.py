@@ -57,7 +57,6 @@ class UserLessonWithDetails(UserLesson):
 class LessonCompletionRequest(BaseModel):
     points_earned: int
     commit_text: Optional[str] = None
-    completion_notes: Optional[str] = None
 
 
 class LessonUnlockRequest(BaseModel):
