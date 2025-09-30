@@ -12,29 +12,20 @@ from app.schemas.user_journey import (
     UserJourneyWithProgress,
     UserJourneyStartRequest
 )
-from app.utils.response import APIException
+from app.utils.response import APIException, APIResponse
 
 router = APIRouter(prefix="/user-journeys", tags=["user-journeys"])
 
 
-@router.post("/start", response_model=UserJourney)
+@router.post("/start")
 async def start_user_journey(
     request: UserJourneyStartRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Start a new user journey based on assessment results"""
+    """Start a new user journey or continue to next category"""
     try:
         service = UserJourneyService(db)
-        
-        # Check if user already has an active journey
-        active_journey = service.get_active_user_journey(current_user.id)
-        if active_journey:
-            raise APIException(
-                status_code=400,
-                message="User already has an active journey. Complete or pause current journey first.",
-                success=False
-            )
         
         journey_data = UserJourneyCreate(
             user_id=current_user.id,
@@ -44,8 +35,17 @@ async def start_user_journey(
             current_category=""  # Will be set from assessment
         )
         
-        journey = service.create_user_journey(journey_data)
-        return journey
+        # This will either create new journey or update existing one
+        journey = service.start_or_update_journey(journey_data)
+        
+        # Convert to Pydantic schema
+        journey_schema = UserJourney.from_orm(journey)
+        
+        return APIResponse(
+            success=True,
+            message="User journey started/updated successfully",
+            data=journey_schema
+        )
         
     except ValueError as e:
         raise APIException(
@@ -56,12 +56,12 @@ async def start_user_journey(
     except Exception as e:
         raise APIException(
             status_code=500,
-            message="Failed to start user journey",
+            message="Failed to start/update user journey",
             success=False
         )
 
 
-@router.get("/active", response_model=UserJourney)
+@router.get("/active")
 async def get_active_user_journey(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -77,10 +77,77 @@ async def get_active_user_journey(
             success=False
         )
     
-    return journey
+    # Convert to Pydantic schema
+    journey_schema = UserJourney.from_orm(journey)
+    
+    return APIResponse(
+        success=True,
+        message="Active journey retrieved successfully",
+        data=journey_schema
+    )
 
 
-@router.get("/{journey_id}", response_model=UserJourney)
+@router.get("/category-progression")
+async def get_category_progression(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get category progression based on assessment scores"""
+    service = UserJourneyService(db)
+    
+    # Get user's active journey
+    journey = service.get_active_user_journey(current_user.id)
+    
+    if not journey:
+        raise APIException(
+            status_code=404,
+            message="No active journey found",
+            success=False
+        )
+    
+    # Get assessment result
+    from app.models.assessment_result import AssessmentResult
+    assessment_result = db.query(AssessmentResult).filter(
+        AssessmentResult.id == journey.assessment_result_id
+    ).first()
+    
+    if not assessment_result:
+        raise APIException(
+            status_code=404,
+            message="Assessment result not found",
+            success=False
+        )
+    
+    # Get categories sorted by scores (lowest to highest)
+    category_scores = {
+        'Clarity': assessment_result.clarity_score,
+        'Consistency': assessment_result.consistency_score,
+        'Connection': assessment_result.connection_score,
+        'Courage': assessment_result.courage_score,
+        'Curiosity': assessment_result.curiosity_score
+    }
+    
+    # Sort categories by score (ascending - lowest first)
+    sorted_categories = sorted(category_scores.items(), key=lambda x: x[1])
+    
+    # Create response data
+    progression_data = {
+        'current_category': journey.current_category,
+        'completed_categories': journey.categories_completed or [],
+        'category_order': [{'name': cat, 'score': score} for cat, score in sorted_categories],
+        'next_growth_focus': sorted_categories[len(journey.categories_completed or []):] if journey.categories_completed else sorted_categories,
+        'journey_status': journey.status,
+        'total_categories_completed': journey.total_categories_completed
+    }
+    
+    return APIResponse(
+        success=True,
+        message="Category progression retrieved successfully",
+        data=progression_data
+    )
+
+
+@router.get("/{journey_id}")
 async def get_user_journey(
     journey_id: int,
     db: Session = Depends(get_db),
@@ -97,10 +164,17 @@ async def get_user_journey(
             success=False
         )
     
-    return journey
+    # Convert to Pydantic schema
+    journey_schema = UserJourney.from_orm(journey)
+    
+    return APIResponse(
+        success=True,
+        message="Journey retrieved successfully",
+        data=journey_schema
+    )
 
 
-@router.get("/", response_model=List[UserJourney])
+@router.get("/")
 async def get_user_journeys(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -109,14 +183,22 @@ async def get_user_journeys(
     service = UserJourneyService(db)
     
     # This would need to be implemented in the service
-    journeys = db.query(service.model).filter(
-        service.model.user_id == current_user.id
-    ).order_by(service.model.created_at.desc()).all()
+    from app.models.user_journey import UserJourney
+    journeys = db.query(UserJourney).filter(
+        UserJourney.user_id == current_user.id
+    ).order_by(UserJourney.created_at.desc()).all()
     
-    return journeys
+    # Convert to Pydantic schemas
+    journey_schemas = [UserJourney.from_orm(journey) for journey in journeys]
+    
+    return APIResponse(
+        success=True,
+        message="User journeys retrieved successfully",
+        data=journey_schemas
+    )
 
 
-@router.put("/{journey_id}", response_model=UserJourney)
+@router.put("/{journey_id}")
 async def update_user_journey(
     journey_id: int,
     update_data: UserJourneyUpdate,
@@ -134,10 +216,17 @@ async def update_user_journey(
             success=False
         )
     
-    return journey
+    # Convert to Pydantic schema
+    journey_schema = UserJourney.from_orm(journey)
+    
+    return APIResponse(
+        success=True,
+        message="Journey updated successfully",
+        data=journey_schema
+    )
 
 
-@router.post("/{journey_id}/complete-category", response_model=UserJourney)
+@router.post("/{journey_id}/complete-category")
 async def complete_category_and_move_to_next(
     journey_id: int,
     db: Session = Depends(get_db),
@@ -154,7 +243,14 @@ async def complete_category_and_move_to_next(
             success=False
         )
     
-    return journey
+    # Convert to Pydantic schema
+    journey_schema = UserJourney.from_orm(journey)
+    
+    return APIResponse(
+        success=True,
+        message="Category completed and moved to next successfully",
+        data=journey_schema
+    )
 
 
 @router.delete("/{journey_id}")
@@ -175,7 +271,12 @@ async def delete_user_journey(
         )
     
     # Soft delete by updating status to paused
-    update_data = UserJourneyUpdate(status="paused")
+    from app.models.user_journey import JourneyStatus
+    update_data = UserJourneyUpdate(status=JourneyStatus.PAUSED)
     updated_journey = service.update_user_journey(journey_id, current_user.id, update_data)
     
-    return {"message": "Journey paused successfully", "success": True}
+    return APIResponse(
+        success=True,
+        message="Journey paused successfully",
+        data=updated_journey
+    )

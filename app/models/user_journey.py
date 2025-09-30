@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -33,6 +33,7 @@ class UserJourney(Base):
     total_categories_completed = Column(Integer, default=0)
     total_weeks_completed = Column(Integer, default=0)
     total_lessons_completed = Column(Integer, default=0)
+    categories_completed = Column(ARRAY(String), default=list)  # Array of completed categories
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

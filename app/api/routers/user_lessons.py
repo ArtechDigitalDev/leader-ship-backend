@@ -12,12 +12,12 @@ from app.schemas.user_lesson import (
     LessonUnlockRequest,
     UserLessonUpdate
 )
-from app.utils.response import APIException
+from app.utils.response import APIException, APIResponse
 
 router = APIRouter(prefix="/user-lessons", tags=["user-lessons"])
 
 
-@router.get("/available", response_model=List[UserLessonWithDetails])
+@router.get("/available")
 async def get_available_lessons(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -38,7 +38,11 @@ async def get_available_lessons(
         )
         enhanced_lessons.append(lesson_with_details)
     
-    return enhanced_lessons
+    return APIResponse(
+        success=True,
+        message="Available lessons retrieved successfully",
+        data=enhanced_lessons
+    )
 
 
 @router.get("/category/{category}", response_model=List[UserLessonWithDetails])
@@ -115,7 +119,7 @@ async def start_lesson(
     return lesson
 
 
-@router.post("/{lesson_id}/complete", response_model=UserLesson)
+@router.post("/{lesson_id}/complete")
 async def complete_lesson(
     lesson_id: int,
     completion_data: LessonCompletionRequest,
@@ -133,7 +137,14 @@ async def complete_lesson(
             success=False
         )
     
-    return lesson
+    # Convert to Pydantic schema
+    lesson_schema = UserLesson.from_orm(lesson)
+    
+    return APIResponse(
+        success=True,
+        message="Lesson completed successfully",
+        data=lesson_schema
+    )
 
 
 @router.put("/{lesson_id}/unlock", response_model=UserLesson)

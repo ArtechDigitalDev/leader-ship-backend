@@ -88,6 +88,7 @@ class UserLessonService:
         # Update lesson
         user_lesson.status = LessonStatus.COMPLETED
         user_lesson.points_earned = completion_data.points_earned
+        user_lesson.commit_text = completion_data.commit_text
         user_lesson.completed_at = datetime.utcnow()
         
         # Update user progress

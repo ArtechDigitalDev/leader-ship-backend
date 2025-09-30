@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 from app.models.user_journey import JourneyStatus
 
@@ -27,6 +27,7 @@ class UserJourneyUpdate(BaseModel):
     total_categories_completed: Optional[int] = None
     total_weeks_completed: Optional[int] = None
     total_lessons_completed: Optional[int] = None
+    categories_completed: Optional[List[str]] = None
     completed_at: Optional[datetime] = None
 
 
@@ -39,6 +40,7 @@ class UserJourneyInDB(UserJourneyBase):
     total_categories_completed: int = 0
     total_weeks_completed: int = 0
     total_lessons_completed: int = 0
+    categories_completed: List[str] = []
     created_at: datetime
     updated_at: Optional[datetime] = None
 

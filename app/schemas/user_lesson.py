@@ -7,6 +7,7 @@ from app.models.user_lesson import LessonStatus
 class UserLessonBase(BaseModel):
     status: LessonStatus = LessonStatus.LOCKED
     points_earned: int = 0
+    commit_text: Optional[str] = None
     days_between_lessons: int = 1
 
 
@@ -19,6 +20,7 @@ class UserLessonCreate(UserLessonBase):
 class UserLessonUpdate(BaseModel):
     status: Optional[LessonStatus] = None
     points_earned: Optional[int] = None
+    commit_text: Optional[str] = None
     unlocked_at: Optional[datetime] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -54,6 +56,7 @@ class UserLessonWithDetails(UserLesson):
 
 class LessonCompletionRequest(BaseModel):
     points_earned: int
+    commit_text: Optional[str] = None
     completion_notes: Optional[str] = None
 
 

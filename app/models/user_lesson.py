@@ -23,6 +23,7 @@ class UserLesson(Base):
     # Lesson progress
     status = Column(Enum(LessonStatus), default=LessonStatus.LOCKED, nullable=False)
     points_earned = Column(Integer, default=0)  # 0-25 points per lesson
+    commit_text = Column(String(1000), nullable=True)  # User's reflection/commitment text
     
     # Timing
     unlocked_at = Column(DateTime(timezone=True), nullable=True)  # When lesson became available

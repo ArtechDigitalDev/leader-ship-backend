@@ -17,6 +17,28 @@ class UserJourneyService:
     def __init__(self, db: Session):
         self.db = db
 
+    def user_has_existing_journey(self, user_id: int) -> bool:
+        """Check if user already has any journey (since they can only take assessment once)"""
+        existing_journey = self.db.query(UserJourney).filter(
+            UserJourney.user_id == user_id
+        ).first()
+        return existing_journey is not None
+
+    def start_or_update_journey(self, journey_data: UserJourneyCreate) -> UserJourney:
+        """Start new journey or update existing one to next category"""
+        
+        # Check if user has existing journey
+        existing_journey = self.db.query(UserJourney).filter(
+            UserJourney.user_id == journey_data.user_id
+        ).first()
+        
+        if existing_journey:
+            # Update existing journey to next category
+            return self._update_journey_to_next_category(existing_journey, journey_data.assessment_result_id)
+        else:
+            # Create new journey
+            return self._create_new_journey(journey_data)
+
     def create_user_journey(self, journey_data: UserJourneyCreate) -> UserJourney:
         """Create a new user journey based on assessment results"""
         
@@ -103,15 +125,43 @@ class UserJourneyService:
         return user_journey
 
     def complete_category_and_move_to_next(self, user_id: int, journey_id: int) -> UserJourney:
-        """Complete current category and move to next one"""
+        """Complete current category and move to next one based on assessment scores"""
         user_journey = self.get_user_journey(user_id, journey_id)
         
-        # Get all categories in order
-        categories = ['Clarity', 'Consistency', 'Connection', 'Courage', 'Curiosity']
+        # Get assessment result to determine category order based on scores
+        assessment_result = self.db.query(AssessmentResult).filter(
+            AssessmentResult.id == user_journey.assessment_result_id
+        ).first()
+        
+        if not assessment_result:
+            raise APIException(
+                status_code=404,
+                message="Assessment result not found",
+                success=False
+            )
+        
+        # Get categories sorted by scores (lowest to highest)
+        category_scores = {
+            'Clarity': assessment_result.clarity_score,
+            'Consistency': assessment_result.consistency_score,
+            'Connection': assessment_result.connection_score,
+            'Courage': assessment_result.courage_score,
+            'Curiosity': assessment_result.curiosity_score
+        }
+        
+        # Sort categories by score (ascending - lowest first)
+        sorted_categories = sorted(category_scores.items(), key=lambda x: x[1])
+        categories = [cat for cat, score in sorted_categories]
+        
         current_index = categories.index(user_journey.current_category)
         
         # Update journey progress
         user_journey.total_categories_completed += 1
+        
+        # Add completed category to the array
+        if user_journey.categories_completed is None:
+            user_journey.categories_completed = []
+        user_journey.categories_completed.append(user_journey.current_category)
         
         # Check if journey is complete
         if current_index + 1 >= len(categories):
@@ -120,7 +170,7 @@ class UserJourneyService:
             user_journey.completed_at = datetime.utcnow()
             user_journey.current_category = None
         else:
-            # Move to next category
+            # Move to next category (next lowest score)
             next_category = categories[current_index + 1]
             user_journey.current_category = next_category
             
@@ -134,6 +184,61 @@ class UserJourneyService:
         self.db.refresh(user_journey)
         
         return user_journey
+
+    def _create_new_journey(self, journey_data: UserJourneyCreate) -> UserJourney:
+        """Create a new user journey"""
+        return self.create_user_journey(journey_data)
+
+    def _update_journey_to_next_category(self, existing_journey: UserJourney, assessment_result_id: int) -> UserJourney:
+        """Update existing journey to next category"""
+        
+        # Get assessment result to determine next category
+        assessment_result = self.db.query(AssessmentResult).filter(
+            AssessmentResult.id == assessment_result_id
+        ).first()
+        
+        if not assessment_result:
+            raise APIException(
+                status_code=404,
+                message="Assessment result not found",
+                success=False
+            )
+        
+        # Get categories sorted by scores (lowest to highest)
+        category_scores = {
+            'Clarity': assessment_result.clarity_score,
+            'Consistency': assessment_result.consistency_score,
+            'Connection': assessment_result.connection_score,
+            'Courage': assessment_result.courage_score,
+            'Curiosity': assessment_result.curiosity_score
+        }
+        
+        sorted_categories = sorted(category_scores.items(), key=lambda x: x[1])
+        categories = [cat for cat, score in sorted_categories]
+        
+        # Find next category (skip completed ones)
+        completed_count = len(existing_journey.categories_completed or [])
+        if completed_count >= len(categories):
+            # All categories completed
+            existing_journey.status = JourneyStatus.COMPLETED
+            existing_journey.completed_at = datetime.utcnow()
+            existing_journey.current_category = None
+        else:
+            # Move to next category
+            next_category = categories[completed_count]
+            existing_journey.current_category = next_category
+            existing_journey.status = JourneyStatus.ACTIVE
+            
+            # Initialize lessons for new category
+            self._initialize_lessons_for_category(existing_journey.id, existing_journey.user_id, next_category)
+        
+        # Update user progress
+        self._create_or_update_user_progress(existing_journey.user_id, existing_journey.id, existing_journey.current_category)
+        
+        self.db.commit()
+        self.db.refresh(existing_journey)
+        
+        return existing_journey
 
     def _initialize_lessons_for_category(self, journey_id: int, user_id: int, category: str):
         """Initialize user lessons for a specific category"""

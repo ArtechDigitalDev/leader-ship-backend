@@ -11,12 +11,12 @@ from app.schemas.user_progress import (
     UserProgressUpdate,
     ProgressUpdateRequest
 )
-from app.utils.response import APIException
+from app.utils.response import APIException, APIResponse
 
 router = APIRouter(prefix="/user-progress", tags=["user-progress"])
 
 
-@router.get("/", response_model=UserProgress)
+@router.get("/")
 async def get_user_progress(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -32,10 +32,14 @@ async def get_user_progress(
             success=False
         )
     
-    return progress
+    return APIResponse(
+        success=True,
+        message="User progress retrieved successfully",
+        data=progress
+    )
 
 
-@router.get("/stats", response_model=Dict[str, Any])
+@router.get("/stats")
 async def get_user_progress_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -51,7 +55,11 @@ async def get_user_progress_stats(
             success=False
         )
     
-    return stats
+    return APIResponse(
+        success=True,
+        message="User progress stats retrieved successfully",
+        data=stats
+    )
 
 
 @router.put("/", response_model=UserProgress)
