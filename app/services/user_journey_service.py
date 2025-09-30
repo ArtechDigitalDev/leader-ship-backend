@@ -125,7 +125,7 @@ class UserJourneyService:
         return user_journey
 
     def complete_category_and_move_to_next(self, user_id: int, journey_id: int) -> UserJourney:
-        """Complete current category and move to next one based on assessment scores"""
+        """Complete current category and reset for next category"""
         user_journey = self.get_user_journey(user_id, journey_id)
         
         # Get assessment result to determine category order based on scores
@@ -172,10 +172,15 @@ class UserJourneyService:
         else:
             # Move to next category (next lowest score)
             next_category = categories[current_index + 1]
-            user_journey.current_category = next_category
             
-            # Initialize lessons for new category
-            self._initialize_lessons_for_category(journey_id, user_id, next_category)
+            # Update AssessmentResult growth_focus to next category
+            assessment_result.growth_focus = next_category
+            
+            # Reset current category to None so user can start fresh
+            user_journey.current_category = None
+            
+            # Reset journey to active status for new category start
+            user_journey.status = JourneyStatus.ACTIVE
         
         # Update user progress
         self._update_user_progress_on_category_completion(user_id, user_journey.current_category)

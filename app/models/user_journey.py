@@ -22,7 +22,7 @@ class UserJourney(Base):
     # Journey configuration
     growth_focus_category = Column(String(20), nullable=False)  # 'clarity', 'consistency', etc.
     intentional_advantage_category = Column(String(20), nullable=False)
-    current_category = Column(String(20), nullable=False)  # Which category user is currently working on
+    current_category = Column(String(20), nullable=True)  # Which category user is currently working on
     
     # Journey status
     status = Column(Enum(JourneyStatus), default=JourneyStatus.ACTIVE, nullable=False)
