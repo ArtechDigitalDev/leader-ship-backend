@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.user_journey import UserJourney, JourneyStatus
 from app.models.user_lesson import UserLesson, LessonStatus
@@ -152,70 +153,48 @@ class UserJourneyService:
         # Sort categories by score (ascending - lowest first)
         sorted_categories = sorted(category_scores.items(), key=lambda x: x[1])
         categories = [cat for cat, score in sorted_categories]
-        
-        # Handle case where current_category is None (already reset)
-        if user_journey.current_category is None:
-            # If current_category is None, we need to find the next category based on completed categories
-            completed_count = len(user_journey.categories_completed or [])
-            
-            if completed_count >= len(categories):
-                # All categories completed
-                user_journey.status = JourneyStatus.COMPLETED
-                user_journey.completed_at = datetime.utcnow()
-                user_journey.current_category = None
-                # Reset journey fields
-                user_journey.growth_focus_category = None
-                user_journey.intentional_advantage_category = None
-            else:
-                # Move to next category
-                next_category = categories[completed_count]
-                
-                # Update AssessmentResult growth_focus to next category
-                assessment_result.growth_focus = next_category
-                
-                # Reset journey fields for fresh start
-                user_journey.current_category = None
-                user_journey.growth_focus_category = None
-                user_journey.intentional_advantage_category = None
-                
-                # Set status to completed (category is done, ready for next)
-                user_journey.status = JourneyStatus.COMPLETED
-        else:
-            # Current category exists, complete it
+        print("categories -", categories)
+        # First, if current_category exists, complete it and add to categories_completed
+        if user_journey.current_category is not None:
             current_index = categories.index(user_journey.current_category)
-            
-            # Update journey progress
-            user_journey.total_categories_completed += 1
             
             # Add completed category to the array (capitalize first letter)
             if user_journey.categories_completed is None:
                 user_journey.categories_completed = []
             user_journey.categories_completed.append(user_journey.current_category.capitalize())
             
-            # Check if journey is complete
-            if current_index + 1 >= len(categories):
-                # Journey complete
-                user_journey.status = JourneyStatus.COMPLETED
-                user_journey.completed_at = datetime.utcnow()
-                user_journey.current_category = None
-                # Reset journey fields
-                user_journey.growth_focus_category = None
-                user_journey.intentional_advantage_category = None
-            else:
-                # Move to next category (next lowest score)
-                next_category = categories[current_index + 1]
-                
-                # Update AssessmentResult growth_focus to next category
-                assessment_result.growth_focus = next_category
-                
-                # Reset journey fields for fresh start
-                user_journey.current_category = None
-                user_journey.growth_focus_category = None
-                user_journey.intentional_advantage_category = None
-                
-                # Set status to completed (category is done, ready for next)
-                user_journey.status = JourneyStatus.COMPLETED
+            # Mark the array field as modified for SQLAlchemy
+            flag_modified(user_journey, 'categories_completed')
+            
+            # Update journey progress
+            user_journey.total_categories_completed += 1
+            
+        # Now handle the next steps based on current state
+        completed_count = len(user_journey.categories_completed or [])
         
+        if completed_count >= len(categories):
+            # All categories completed
+            user_journey.status = JourneyStatus.COMPLETED
+            user_journey.completed_at = datetime.utcnow()
+            user_journey.current_category = None
+            # Reset journey fields
+            user_journey.growth_focus_category = None
+            user_journey.intentional_advantage_category = None
+        else:
+            # Move to next category
+            next_category = categories[completed_count]
+            
+            # Update AssessmentResult growth_focus to next category
+            assessment_result.growth_focus = next_category
+            
+            # Reset journey fields for fresh start
+            user_journey.current_category = None
+            user_journey.growth_focus_category = None
+            user_journey.intentional_advantage_category = None
+            
+            # Set status to completed (category is done, ready for next)
+            user_journey.status = JourneyStatus.COMPLETED
+            
         # Update user progress
         self._update_user_progress_on_category_completion(user_id, user_journey.current_category)
         
