@@ -34,8 +34,17 @@ class UserJourneyService:
         ).first()
         
         if existing_journey:
-            # Update existing journey to next category
-            return self._update_journey_to_next_category(existing_journey, journey_data.assessment_result_id)
+            # Only update to next category if journey is completed (current_category is None, status is completed)
+            if existing_journey.current_category is None and existing_journey.status == JourneyStatus.COMPLETED:
+                # Update existing journey to next category
+                return self._update_journey_to_next_category(existing_journey, journey_data.assessment_result_id)
+            else:
+                # Journey is still active, return existing journey
+                raise APIException(
+                    status_code=400,
+                    message=f"Great progress! You're currently working on {existing_journey.current_category}. Complete all lessons in this category to unlock the next one. Keep going!",
+                    success=False
+                )
         else:
             # Create new journey
             return self._create_new_journey(journey_data)
@@ -153,7 +162,9 @@ class UserJourneyService:
         # Sort categories by score (ascending - lowest first)
         sorted_categories = sorted(category_scores.items(), key=lambda x: x[1])
         categories = [cat for cat, score in sorted_categories]
-        print("categories -", categories)
+        # Track if a category was actually completed in this call
+        category_was_completed = False
+        
         # First, if current_category exists, complete it and add to categories_completed
         if user_journey.current_category is not None:
             current_index = categories.index(user_journey.current_category)
@@ -168,6 +179,9 @@ class UserJourneyService:
             
             # Update journey progress
             user_journey.total_categories_completed += 1
+            
+            # Mark that a category was completed
+            category_was_completed = True
             
         # Now handle the next steps based on current state
         completed_count = len(user_journey.categories_completed or [])
@@ -195,8 +209,9 @@ class UserJourneyService:
             # Set status to completed (category is done, ready for next)
             user_journey.status = JourneyStatus.COMPLETED
             
-        # Update user progress
-        self._update_user_progress_on_category_completion(user_id, user_journey.current_category)
+        # Update user progress only if a category was actually completed
+        if category_was_completed:
+            self._update_user_progress_on_category_completion(user_id, user_journey.current_category)
         
         self.db.commit()
         self.db.refresh(user_journey)
@@ -210,7 +225,7 @@ class UserJourneyService:
     def _update_journey_to_next_category(self, existing_journey: UserJourney, assessment_result_id: int) -> UserJourney:
         """Update existing journey to next category"""
         
-        # Get assessment result to determine next category
+        # Get assessment result (growth_focus already updated by complete_category_and_move_to_next)
         assessment_result = self.db.query(AssessmentResult).filter(
             AssessmentResult.id == assessment_result_id
         ).first()
@@ -222,30 +237,22 @@ class UserJourneyService:
                 success=False
             )
         
-        # Get categories sorted by scores (lowest to highest)
-        category_scores = {
-            'Clarity': assessment_result.clarity_score,
-            'Consistency': assessment_result.consistency_score,
-            'Connection': assessment_result.connection_score,
-            'Courage': assessment_result.courage_score,
-            'Curiosity': assessment_result.curiosity_score
-        }
+        # Use the growth_focus from assessment_result (already set to next category)
+        next_category = assessment_result.growth_focus
         
-        sorted_categories = sorted(category_scores.items(), key=lambda x: x[1])
-        categories = [cat for cat, score in sorted_categories]
-        
-        # Find next category (skip completed ones)
-        completed_count = len(existing_journey.categories_completed or [])
-        if completed_count >= len(categories):
+        if not next_category:
             # All categories completed
             existing_journey.status = JourneyStatus.COMPLETED
             existing_journey.completed_at = datetime.utcnow()
             existing_journey.current_category = None
+            existing_journey.growth_focus_category = None
+            existing_journey.intentional_advantage_category = None
         else:
-            # Move to next category
-            next_category = categories[completed_count]
+            # Set current category to the next category from assessment_result
             existing_journey.current_category = next_category
             existing_journey.status = JourneyStatus.ACTIVE
+            existing_journey.growth_focus_category = assessment_result.growth_focus
+            existing_journey.intentional_advantage_category = assessment_result.intentional_advantage
             
             # Initialize lessons for new category
             self._initialize_lessons_for_category(existing_journey.id, existing_journey.user_id, next_category)

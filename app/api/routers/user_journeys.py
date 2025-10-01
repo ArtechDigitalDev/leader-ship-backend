@@ -47,6 +47,9 @@ async def start_user_journey(
             data=journey_schema
         )
         
+    except APIException as e:
+        # Re-raise APIException as is (already has proper structure)
+        raise e
     except ValueError as e:
         raise APIException(
             status_code=400,
@@ -54,6 +57,11 @@ async def start_user_journey(
             success=False
         )
     except Exception as e:
+        # Log the actual error for debugging
+        print(f"Unexpected error in start_user_journey: {e}")
+        import traceback
+        traceback.print_exc()
+        
         raise APIException(
             status_code=500,
             message="Failed to start/update user journey",
