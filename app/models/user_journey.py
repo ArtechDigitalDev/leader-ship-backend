@@ -20,8 +20,8 @@ class UserJourney(Base):
     assessment_result_id = Column(Integer, ForeignKey("assessment_results.id"), nullable=False)
     
     # Journey configuration
-    growth_focus_category = Column(String(20), nullable=False)  # 'clarity', 'consistency', etc.
-    intentional_advantage_category = Column(String(20), nullable=False)
+    growth_focus_category = Column(String(20), nullable=True)  # 'clarity', 'consistency', etc.
+    intentional_advantage_category = Column(String(20), nullable=True)
     current_category = Column(String(20), nullable=True)  # Which category user is currently working on
     
     # Journey status

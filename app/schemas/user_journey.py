@@ -5,9 +5,9 @@ from app.models.user_journey import JourneyStatus
 
 
 class UserJourneyBase(BaseModel):
-    growth_focus_category: str
-    intentional_advantage_category: str
-    current_category: str
+    growth_focus_category: Optional[str] = None
+    intentional_advantage_category: Optional[str] = None
+    current_category: Optional[str] = None
     status: JourneyStatus = JourneyStatus.ACTIVE
 
 

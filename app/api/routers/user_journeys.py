@@ -39,7 +39,7 @@ async def start_user_journey(
         journey = service.start_or_update_journey(journey_data)
         
         # Convert to Pydantic schema
-        journey_schema = UserJourney.from_orm(journey)
+        journey_schema = UserJourney.model_validate(journey)
         
         return APIResponse(
             success=True,
@@ -78,7 +78,7 @@ async def get_active_user_journey(
         )
     
     # Convert to Pydantic schema
-    journey_schema = UserJourney.from_orm(journey)
+    journey_schema = UserJourney.model_validate(journey)
     
     return APIResponse(
         success=True,
@@ -165,7 +165,7 @@ async def get_user_journey(
         )
     
     # Convert to Pydantic schema
-    journey_schema = UserJourney.from_orm(journey)
+    journey_schema = UserJourney.model_validate(journey)
     
     return APIResponse(
         success=True,
@@ -217,7 +217,7 @@ async def update_user_journey(
         )
     
     # Convert to Pydantic schema
-    journey_schema = UserJourney.from_orm(journey)
+    journey_schema = UserJourney.model_validate(journey)
     
     return APIResponse(
         success=True,
@@ -244,7 +244,7 @@ async def complete_category_and_move_to_next(
         )
     
     # Convert to Pydantic schema
-    journey_schema = UserJourney.from_orm(journey)
+    journey_schema = UserJourney.model_validate(journey)
     
     return APIResponse(
         success=True,

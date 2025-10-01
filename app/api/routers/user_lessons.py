@@ -45,7 +45,7 @@ async def get_available_lessons(
     )
 
 
-@router.get("/category/{category}", response_model=List[UserLessonWithDetails])
+@router.get("/category/{category}")
 async def get_user_lessons_by_category(
     category: str,
     db: Session = Depends(get_db),
@@ -67,10 +67,14 @@ async def get_user_lessons_by_category(
         )
         enhanced_lessons.append(lesson_with_details)
     
-    return enhanced_lessons
+    return APIResponse(
+        success=True,
+        message="User lessons by category retrieved successfully",
+        data=enhanced_lessons
+    )
 
 
-@router.get("/{lesson_id}", response_model=UserLessonWithDetails)
+@router.get("/{lesson_id}")
 async def get_user_lesson(
     lesson_id: int,
     db: Session = Depends(get_db),
@@ -96,10 +100,14 @@ async def get_user_lesson(
         week_number=lesson.daily_lesson.week.week_number if lesson.daily_lesson and lesson.daily_lesson.week else None
     )
     
-    return lesson_with_details
+    return APIResponse(
+        success=True,
+        message="User lesson retrieved successfully",
+        data=lesson_with_details
+    )
 
 
-@router.post("/{lesson_id}/start", response_model=UserLesson)
+@router.post("/{lesson_id}/start")
 async def start_lesson(
     lesson_id: int,
     db: Session = Depends(get_db),
@@ -116,7 +124,14 @@ async def start_lesson(
             success=False
         )
     
-    return lesson
+    # Convert to Pydantic schema
+    lesson_schema = UserLesson.model_validate(lesson)
+    
+    return APIResponse(
+        success=True,
+        message="Lesson started successfully",
+        data=lesson_schema
+    )
 
 
 @router.post("/{lesson_id}/complete")
@@ -138,7 +153,7 @@ async def complete_lesson(
         )
     
     # Convert to Pydantic schema
-    lesson_schema = UserLesson.from_orm(lesson)
+    lesson_schema = UserLesson.model_validate(lesson)
     
     return APIResponse(
         success=True,
@@ -147,7 +162,7 @@ async def complete_lesson(
     )
 
 
-@router.put("/{lesson_id}/unlock", response_model=UserLesson)
+@router.put("/{lesson_id}/unlock")
 async def unlock_lesson_manually(
     lesson_id: int,
     db: Session = Depends(get_db),
@@ -164,10 +179,17 @@ async def unlock_lesson_manually(
             success=False
         )
     
-    return lesson
+    # Convert to Pydantic schema
+    lesson_schema = UserLesson.model_validate(lesson)
+    
+    return APIResponse(
+        success=True,
+        message="Lesson unlocked successfully",
+        data=lesson_schema
+    )
 
 
-@router.put("/{lesson_id}/settings", response_model=UserLesson)
+@router.put("/{lesson_id}/settings")
 async def update_lesson_settings(
     lesson_id: int,
     days_between_lessons: int,
@@ -192,10 +214,17 @@ async def update_lesson_settings(
             success=False
         )
     
-    return lesson
+    # Convert to Pydantic schema
+    lesson_schema = UserLesson.model_validate(lesson)
+    
+    return APIResponse(
+        success=True,
+        message="Lesson settings updated successfully",
+        data=lesson_schema
+    )
 
 
-@router.post("/unlock-due", response_model=dict)
+@router.post("/unlock-due")
 async def unlock_due_lessons(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -204,14 +233,14 @@ async def unlock_due_lessons(
     service = UserLessonService(db)
     unlocked_count = service.unlock_due_lessons()
     
-    return {
-        "message": f"Unlocked {unlocked_count} lessons",
-        "unlocked_count": unlocked_count,
-        "success": True
-    }
+    return APIResponse(
+        success=True,
+        message=f"Unlocked {unlocked_count} lessons",
+        data={"unlocked_count": unlocked_count}
+    )
 
 
-@router.get("/due/unlock", response_model=List[UserLesson])
+@router.get("/due/unlock")
 async def get_lessons_due_for_unlock(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -223,4 +252,11 @@ async def get_lessons_due_for_unlock(
     # Filter to only current user's lessons
     user_lessons = [lesson for lesson in lessons if lesson.user_id == current_user.id]
     
-    return user_lessons
+    # Convert to Pydantic schemas
+    lesson_schemas = [UserLesson.from_orm(lesson) for lesson in user_lessons]
+    
+    return APIResponse(
+        success=True,
+        message="Lessons due for unlock retrieved successfully",
+        data=lesson_schemas
+    )
