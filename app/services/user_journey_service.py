@@ -121,6 +121,16 @@ class UserJourneyService:
         # The router will handle the 404 response
         return journey
 
+    def get_user_journey_by_user_id(self, user_id: int) -> Optional[UserJourney]:
+        """Get any journey for a user (regardless of status)"""
+        journey = self.db.query(UserJourney).filter(
+            UserJourney.user_id == user_id
+        ).first()
+        
+        # Note: This method returns None if no journey found
+        # The router will handle the 404 response
+        return journey
+
     def update_user_journey(self, journey_id: int, user_id: int, update_data: UserJourneyUpdate) -> UserJourney:
         """Update user journey"""
         user_journey = self.get_user_journey(user_id, journey_id)

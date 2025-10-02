@@ -56,12 +56,12 @@ async def get_user_lessons_by_growth_focus_category(
     try:
         # Get user journey to find growth_focus_category
         journey_service = UserJourneyService(db)
-        user_journey = journey_service.get_active_user_journey(current_user.id)
+        user_journey = journey_service.get_user_journey_by_user_id(current_user.id)
         
         if not user_journey:
             raise APIException(
                 status_code=404,
-                message="No active journey found for user",
+                message="No journey found for user",
                 success=False
             )
         
