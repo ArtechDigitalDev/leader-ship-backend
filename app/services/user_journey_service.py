@@ -191,9 +191,7 @@ class UserJourneyService:
             user_journey.status = JourneyStatus.COMPLETED
             user_journey.completed_at = datetime.utcnow()
             user_journey.current_category = None
-            # Reset journey fields
-            user_journey.growth_focus_category = None
-            user_journey.intentional_advantage_category = None
+            # Keep growth_focus_category and intentional_advantage_category for reference
         else:
             # Move to next category
             next_category = categories[completed_count]
@@ -201,10 +199,11 @@ class UserJourneyService:
             # Update AssessmentResult growth_focus to next category
             assessment_result.growth_focus = next_category
             
-            # Reset journey fields for fresh start
+            # Reset only current_category for fresh start
             user_journey.current_category = None
-            user_journey.growth_focus_category = None
-            user_journey.intentional_advantage_category = None
+            
+            # Keep growth_focus_category and intentional_advantage_category for reference
+            # They will be updated when next category is selected
             
             # Set status to completed (category is done, ready for next)
             user_journey.status = JourneyStatus.COMPLETED
