@@ -45,33 +45,65 @@ async def get_available_lessons(
     )
 
 
-@router.get("/category/{category}")
-async def get_user_lessons_by_category(
-    category: str,
+@router.get("/category")
+async def get_user_lessons_by_growth_focus_category(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Get all user lessons for a specific category"""
-    service = UserLessonService(db)
-    lessons = service.get_user_lessons_by_category(current_user.id, category.capitalize())
+    """Get all user lessons for the growth focus category from user journey"""
+    from app.services.user_journey_service import UserJourneyService
     
-    # Enhance with lesson details
-    enhanced_lessons = []
-    for lesson in lessons:
-        lesson_with_details = UserLessonWithDetails(
-            **lesson.__dict__,
-            daily_lesson_title=lesson.daily_lesson.title if lesson.daily_lesson else None,
-            daily_lesson_day_number=lesson.daily_lesson.day_number if lesson.daily_lesson else None,
-            week_topic=lesson.daily_lesson.week.topic if lesson.daily_lesson and lesson.daily_lesson.week else None,
-            week_number=lesson.daily_lesson.week.week_number if lesson.daily_lesson and lesson.daily_lesson.week else None
+    try:
+        # Get user journey to find growth_focus_category
+        journey_service = UserJourneyService(db)
+        user_journey = journey_service.get_active_user_journey(current_user.id)
+        
+        if not user_journey:
+            raise APIException(
+                status_code=404,
+                message="No active journey found for user",
+                success=False
+            )
+        
+        # Use growth_focus_category from user journey
+        target_category = user_journey.growth_focus_category
+        if not target_category:
+            raise APIException(
+                status_code=400,
+                message="No growth focus category found in user journey",
+                success=False
+            )
+        
+        # Get lessons for the growth_focus_category
+        service = UserLessonService(db)
+        lessons = service.get_user_lessons_by_category(current_user.id, target_category)
+        
+        # Enhance with lesson details
+        enhanced_lessons = []
+        for lesson in lessons:
+            lesson_with_details = UserLessonWithDetails(
+                **lesson.__dict__,
+                daily_lesson_title=lesson.daily_lesson.title if lesson.daily_lesson else None,
+                daily_lesson_day_number=lesson.daily_lesson.day_number if lesson.daily_lesson else None,
+                week_topic=lesson.daily_lesson.week.topic if lesson.daily_lesson and lesson.daily_lesson.week else None,
+                week_number=lesson.daily_lesson.week.week_number if lesson.daily_lesson and lesson.daily_lesson.week else None
+            )
+            enhanced_lessons.append(lesson_with_details)
+        
+        return APIResponse(
+            success=True,
+            message=f"User lessons for growth focus category '{target_category}' retrieved successfully",
+            data=enhanced_lessons
         )
-        enhanced_lessons.append(lesson_with_details)
-    
-    return APIResponse(
-        success=True,
-        message="User lessons by category retrieved successfully",
-        data=enhanced_lessons
-    )
+        
+    except APIException as e:
+        raise e
+    except Exception as e:
+        raise APIException(
+            status_code=500,
+            message="Failed to retrieve user lessons by category",
+            success=False
+        )
 
 
 @router.get("/{lesson_id}")
