@@ -35,7 +35,7 @@ async def get_user_progress(
     return APIResponse(
         success=True,
         message="User progress retrieved successfully",
-        data=progress
+        data=UserProgressWithStats.model_validate(progress)
     )
 
 
@@ -79,7 +79,7 @@ async def update_user_progress(
             success=False
         )
     
-    return progress
+    return UserProgress.model_validate(progress)
 
 
 @router.post("/lesson-completed")

@@ -126,13 +126,45 @@ class UserProgressService:
         user_progress = self.get_user_progress(user_id)
         
         if not user_progress:
-            return {}
+            # Return default values when no progress found
+            # Get total lessons from daily_lessons table
+            total_lessons = self.db.query(DailyLesson).count()
+            
+            return {
+                "user_id": user_id,
+                "total_points_earned": 0,
+                "total_lessons_completed": 0,
+                "total_lessons": total_lessons,
+                "total_lessons_completed_percentage": 0.0,
+                "total_weeks_completed": 0,
+                "total_categories_completed": 0,
+                "current_category": None,
+                "current_week_number": 1,
+                "current_streak_days": 0,
+                "longest_streak_days": 0,
+                "last_activity_date": None,
+                "average_points_per_lesson": 0,
+                "days_since_last_activity": 0,
+                "next_milestone": "Start your first lesson"
+            }
+        
+        # Get total lessons from daily_lessons table
+        total_lessons = self.db.query(DailyLesson).count()
+        
+        # Calculate completion percentage
+        completion_percentage = 0.0
+        if total_lessons > 0:
+            completion_percentage = round(
+                (user_progress.total_lessons_completed / total_lessons) * 100, 2
+            )
         
         # Calculate additional stats
         stats = {
             "user_id": user_id,
             "total_points_earned": user_progress.total_points_earned,
             "total_lessons_completed": user_progress.total_lessons_completed,
+            "total_lessons": total_lessons,
+            "total_lessons_completed_percentage": completion_percentage,
             "total_weeks_completed": user_progress.total_weeks_completed,
             "total_categories_completed": user_progress.total_categories_completed,
             "current_category": user_progress.current_category,
