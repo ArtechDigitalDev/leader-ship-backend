@@ -34,6 +34,18 @@ class UserJourneyService:
         ).first()
         
         if existing_journey:
+            # Check if all 5 categories are completed
+            total_categories = 5  # Clarity, Consistency, Connection, Courage, Curiosity
+            completed_categories = len(existing_journey.categories_completed) if existing_journey.categories_completed else 0
+            
+            if completed_categories >= total_categories:
+                # All categories completed - journey finished
+                raise APIException(
+                    status_code=400,
+                    message="Congratulations! You have completed all 5 categories of your leadership journey. Your growth journey is complete!",
+                    success=False
+                )
+            
             # Only update to next category if journey is completed (current_category is None, status is completed)
             if existing_journey.current_category is None and existing_journey.status == JourneyStatus.COMPLETED:
                 # Update existing journey to next category
