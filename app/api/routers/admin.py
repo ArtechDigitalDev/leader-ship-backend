@@ -9,6 +9,7 @@ from datetime import timedelta
 
 from app.services import admin_service
 from app.api import deps
+from app.api.deps import get_current_admin_user, get_db
 from app.core import security
 from app.schemas.admin import (
     UserStats, UserWithTrack, UserListResponse, UserSearchRequest,
@@ -18,6 +19,7 @@ from app.schemas.admin import (
 from app.schemas.user import UserInvitation, RoleRequestResponse
 from app.models.user import UserRole, RoleRequestStatus
 from app.models.user import User
+from app.utils.response import APIResponse
 
 router = APIRouter()
 
@@ -549,3 +551,25 @@ def invite_user(
             "expires_in": "7 days"
         }
     }
+
+
+@router.get("/dashboard-stats", response_model=APIResponse)
+async def get_admin_dashboard_stats(
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive admin dashboard statistics"""
+    try:
+        from app.services.admin_service import get_comprehensive_dashboard_stats
+        stats = get_comprehensive_dashboard_stats(db)
+        
+        return APIResponse(
+            success=True,
+            message="Admin dashboard statistics retrieved successfully",
+            data=stats
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to retrieve admin dashboard statistics: {str(e)}"
+        )
