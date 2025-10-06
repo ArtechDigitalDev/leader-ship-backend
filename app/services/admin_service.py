@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.assessment_result import AssessmentResult
 from app.models.week import Week
 from app.models.daily_lesson import DailyLesson
+from app.models.user_journey import UserJourney
 from app.schemas.admin import (
     UserStats, UserWithTrack, UserSearchRequest, AdminUserCreate, 
     AdminUserUpdate, AssessmentStats, AdminDashboardStats
@@ -194,31 +195,25 @@ def get_comprehensive_dashboard_stats(db: Session) -> Dict[str, Any]:
     total_assessments_taken = db.query(AssessmentResult).count()
     unique_users_assessed = db.query(AssessmentResult.user_id).distinct().count()
     
-    # Journey Statistics (based on assessment results)
-    users_with_assessments = db.query(AssessmentResult.user_id).distinct().all()
-    journey_started = len(users_with_assessments)
+    # Journey Statistics (based on user_journey table)
+    total_journeys = db.query(UserJourney).count()
+    journey_completed = db.query(UserJourney).filter(
+        UserJourney.total_categories_completed >= 5
+    ).count()
+    journey_running = db.query(UserJourney).filter(
+        UserJourney.total_categories_completed < 5
+    ).count()
+    
+    # Additional journey insights
+    avg_categories_completed = db.query(func.avg(UserJourney.total_categories_completed)).scalar() or 0
+    journeys_with_progress = db.query(UserJourney).filter(
+        UserJourney.total_categories_completed > 0
+    ).count()
     
     # Total Weeks and Lessons available
     total_weeks_available = db.query(Week).count()
     total_lessons_available = db.query(DailyLesson).count()
     
-    # Category breakdown for assessments
-    category_assessment_counts = {}
-    categories = ['Clarity', 'Consistency', 'Connection', 'Courage', 'Curiosity']
-    
-    for category in categories:
-        # Count how many users have this category as growth focus or intentional advantage
-        growth_focus_count = db.query(AssessmentResult).filter(
-            AssessmentResult.growth_focus == category
-        ).count()
-        intentional_advantage_count = db.query(AssessmentResult).filter(
-            AssessmentResult.intentional_advantage == category
-        ).count()
-        
-        category_assessment_counts[category] = {
-            "growth_focus_count": growth_focus_count,
-            "intentional_advantage_count": intentional_advantage_count
-        }
     
     # Recent activity (last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
@@ -231,6 +226,41 @@ def get_comprehensive_dashboard_stats(db: Session) -> Dict[str, Any]:
         User.created_at >= thirty_days_ago
     ).count()
     
+    # User Engagement Data (Last 30 days)
+    user_engagement_data = []
+    for i in range(30):
+        # Calculate date for each day (today - i days)
+        target_date = datetime.utcnow() - timedelta(days=i)
+        start_of_day = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        # Count active users on this day (users who have taken assessments or made journey progress)
+        assessment_users = db.query(User).join(AssessmentResult).filter(
+            AssessmentResult.created_at >= start_of_day,
+            AssessmentResult.created_at <= end_of_day
+        ).distinct().count()
+        
+        journey_users = db.query(User).join(UserJourney).filter(
+            UserJourney.updated_at >= start_of_day,
+            UserJourney.updated_at <= end_of_day
+        ).distinct().count()
+        
+        # Combine both metrics for daily active users
+        daily_active_users = max(assessment_users, journey_users)
+        
+        # Get day name and formatted date
+        day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        day_name = day_names[target_date.weekday()]
+        formatted_date = target_date.strftime("%m/%d")
+        
+        user_engagement_data.append({
+            "date": f"{day_name} {formatted_date}",
+            "users": daily_active_users
+        })
+    
+    # Reverse to get chronological order (oldest to newest)
+    user_engagement_data.reverse()
+    
     return {
         "user_statistics": {
             "total_users": total_users,
@@ -238,7 +268,8 @@ def get_comprehensive_dashboard_stats(db: Session) -> Dict[str, Any]:
             "participants": participants,
             "coaches": coaches,
             "admins": admins,
-            "recent_users": recent_users
+            "recent_users": recent_users,
+            "userEngagement": user_engagement_data
         },
         "assessment_statistics": {
             "total_assessments_taken": total_assessments_taken,
@@ -246,15 +277,16 @@ def get_comprehensive_dashboard_stats(db: Session) -> Dict[str, Any]:
             "recent_assessments": recent_assessments
         },
         "journey_statistics": {
-            "journey_started": journey_started,
-            "journey_completed": 0,  # Placeholder - implement based on your business logic
-            "journey_running": journey_started,  # Placeholder - implement based on your business logic
+            "journey_started": total_journeys,
+            "journey_completed": journey_completed,
+            "journey_running": journey_running,
+            "avg_categories_completed": round(avg_categories_completed, 2),
+            "journeys_with_progress": journeys_with_progress,
             "total_weeks_available": total_weeks_available,
             "total_lessons_available": total_lessons_available
         },
-        "category_breakdown": category_assessment_counts,
         "system_health": {
-            "total_categories": len(categories),
+            "total_categories": 5,
             "data_freshness": "real_time"
         }
     }
