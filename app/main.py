@@ -5,6 +5,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.core.config import settings
 from app.api.routers import users, assessments, auth, admin, coach, weeks, daily_lessons, assessment_results, user_journeys, user_lessons, user_progress
 from app.utils.response import APIException, api_exception_handler
+from app.core.scheduler import start_scheduler, stop_scheduler
 
 # Import models to ensure they are registered with SQLAlchemy
 from app.models import User, Assessment, AssessmentResult, UserJourney, UserLesson, UserProgress
@@ -17,6 +18,17 @@ app = FastAPI(
     version="1.0.0",
     description="A modern FastAPI backend with comprehensive features",
 )
+
+# Start background scheduler
+@app.on_event("startup")
+async def startup_event():
+    """Start background jobs on application startup"""
+    start_scheduler()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop background jobs on application shutdown"""
+    stop_scheduler()
 
 # Register custom exception handler
 app.add_exception_handler(APIException, api_exception_handler)

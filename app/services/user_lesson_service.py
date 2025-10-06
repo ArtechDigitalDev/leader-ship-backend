@@ -248,3 +248,4 @@ class UserLessonService:
                 ).first()
         
         return None
+

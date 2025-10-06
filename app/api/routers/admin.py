@@ -573,3 +573,44 @@ async def get_admin_dashboard_stats(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to retrieve admin dashboard statistics: {str(e)}"
         )
+
+
+@router.post("/trigger-daily-job", response_model=APIResponse)
+async def trigger_daily_lesson_unlock_job(
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Manually trigger the daily lesson unlock job"""
+    try:
+        from app.core.scheduler import daily_lesson_unlock_job
+        unlocked_count = daily_lesson_unlock_job()
+        return APIResponse(
+            success=True,
+            message=f"Daily lesson unlock job completed successfully",
+            data={"unlocked_lessons": unlocked_count}
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to run daily lesson unlock job: {str(e)}"
+        )
+
+
+@router.get("/scheduler-status", response_model=APIResponse)
+async def get_scheduler_status_endpoint(
+    current_user: User = Depends(get_current_admin_user)
+):
+    """Get current scheduler status and job information"""
+    try:
+        from app.core.scheduler import get_scheduler_status
+        status_info = get_scheduler_status()
+        return APIResponse(
+            success=True,
+            message="Scheduler status retrieved successfully",
+            data=status_info
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to get scheduler status: {str(e)}"
+        )
