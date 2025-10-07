@@ -38,22 +38,19 @@ class SchedulerService:
         unlocked_count = 0
         
         try:
-            # Get only users who have LOCKED lessons (performance optimization)
-            users_with_locked_lessons = self.db.query(UserLesson.user_id).filter(
-                UserLesson.status == LessonStatus.LOCKED
-            ).distinct().all()
-            print("users_with_locked_lessons", users_with_locked_lessons)
-
-            for (user_id,) in users_with_locked_lessons:
-                # Get user preferences
-                user_prefs = self._get_user_preferences(user_id)
-                # print("user_prefs", user_prefs)
-                
-                # Get the next lesson to unlock for this user
+            # Smart filtering: Get users whose lesson_time matches current hour
+            current_hour = datetime.now(timezone.utc).hour
+            
+            # Get users with LOCKED lessons whose lesson_time hour matches current hour
+            users_to_process = self._get_users_for_current_hour(current_hour)
+            print(f"users_to_process for hour {current_hour}: {users_to_process}")
+ 
+            for user_id in users_to_process:
+                # Get the next lesson to unlock for this user (with all validations)
                 next_lesson = self._get_next_lesson_to_unlock(user_id)
-                print("next_lesson", next_lesson)
                 
-                if next_lesson and self._should_unlock_lesson(next_lesson, user_prefs):
+                # If we get a lesson, it's ready to unlock (all checks passed)
+                if next_lesson:
                     next_lesson.status = LessonStatus.AVAILABLE
                     unlocked_count += 1
             
@@ -63,6 +60,60 @@ class SchedulerService:
         except Exception as e:
             self.db.rollback()
             raise e
+
+    def _get_users_for_current_hour(self, current_hour: int) -> list:
+        """
+        Get users for current hour using OPTIMAL filtering order
+        
+        Optimized approach (Suggested by user):
+        1. Filter by active_day (today) - from UserPreferences
+        2. Filter by lesson_time (current hour) - from UserPreferences  
+        3. Check LOCKED lessons (only for filtered users)
+        4. Return for final validation
+        
+        Why better?
+        - Start with smallest dataset (preferences)
+        - Then check larger dataset (lessons) only for relevant users
+        - Minimizes database queries and operations
+        """
+        now = datetime.now(timezone.utc)
+        print("now", now)
+        
+        # Get current day name
+        day_mapping = {0: "mon", 1: "tue", 2: "wed", 3: "thu", 4: "fri", 5: "sat", 6: "sun"}
+        current_day = day_mapping[now.weekday()]
+        print("current_day", current_day)
+        # Step 1 & 2: Filter by active_day AND lesson_time from preferences
+        # This gives us a small set of candidate users
+        all_preferences = self.db.query(UserPreferences).all()
+        print("all_preferences", all_preferences)
+        candidate_users = []
+        for prefs in all_preferences:
+            # Check 1: Is today an active day?
+            if current_day not in prefs.active_days:
+                continue
+            print("prefs.lesson_time", prefs.lesson_time)
+            # Check 2: Does lesson_time hour match current hour?
+            lesson_hour = int(prefs.lesson_time.split(":")[0])
+            print("lesson_hour", lesson_hour , "current_hour", current_hour)
+            if lesson_hour != current_hour:
+                continue
+            # Both conditions met
+            candidate_users.append(prefs.user_id)
+        print("candidate_users", candidate_users)
+        # Early return if no candidates
+        if not candidate_users:
+            return []
+        
+        # Step 3: Check LOCKED lessons ONLY for candidate users
+        # This is much more efficient than checking all users first
+        users_with_locked = self.db.query(UserLesson.user_id).filter(
+            UserLesson.user_id.in_(candidate_users),
+            UserLesson.status == LessonStatus.LOCKED
+        ).distinct().all()
+        
+        result = [user_id for (user_id,) in users_with_locked]
+        return result
 
     def _get_user_preferences(self, user_id: int) -> dict:
         """Get user preferences with defaults"""
@@ -88,41 +139,6 @@ class SchedulerService:
                 "reminder_enabled": "true"
             }
 
-    def _should_unlock_lesson(self, lesson: UserLesson, user_prefs: dict) -> bool:
-        """Check if lesson should be unlocked based on user preferences"""
-        now = datetime.now(timezone.utc)
-        
-        # Check if enough time has passed since lesson creation
-        days_since_creation = (now - lesson.created_at).days
-        days_between_lessons = user_prefs.get("days_between_lessons", 1)
-        
-        if days_since_creation < days_between_lessons:
-            return False
-        
-        # Check if today is an active day
-        if not self._is_active_day(now, user_prefs["active_days"]):
-            return False
-        
-        # Check if previous lesson was completed
-        previous_lesson = self._get_previous_lesson_in_sequence(lesson)
-        
-        if previous_lesson and previous_lesson.completed_at:
-            days_since_completion = (now - previous_lesson.completed_at).days
-            return days_since_completion >= days_between_lessons
-        elif not previous_lesson:
-            # First lesson in sequence - unlock if enough time passed
-            return True
-        
-        return False
-
-    def _is_active_day(self, now: datetime, active_days: list) -> bool:
-        """Check if current day is in user's active days"""
-        day_mapping = {
-            0: "mon", 1: "tue", 2: "wed", 3: "thu", 
-            4: "fri", 5: "sat", 6: "sun"
-        }
-        current_day = day_mapping[now.weekday()]
-        return current_day in active_days
 
     def _get_previous_lesson_in_sequence(self, current_lesson: UserLesson) -> Optional[UserLesson]:
         """Get the previous lesson in the sequence"""
@@ -166,7 +182,14 @@ class SchedulerService:
         return None
 
     def _get_next_lesson_to_unlock(self, user_id: int) -> Optional[UserLesson]:
-        """Get the next lesson to unlock for a user (first LOCKED lesson in sequence)"""
+        """
+        Get the next lesson to unlock with validation
+        
+        Only checks: Previous lesson completed (sequential learning)
+        Schedule controlled by: active_days + lesson_time (already filtered)
+        
+        Returns None if any check fails, returns lesson if ready to unlock
+        """
         # Get user's journey to find current category
         user_journey = self.db.query(UserJourney).filter(
             UserJourney.user_id == user_id,
@@ -184,9 +207,21 @@ class SchedulerService:
 
         print("lessons", lessons)
         
-        # Find the first LOCKED lesson
-        for lesson in lessons:
+        # Find the first LOCKED lesson and validate
+        for i, lesson in enumerate(lessons):
             if lesson.status == LessonStatus.LOCKED:
+                # Only check: Previous lesson completed or doesn't exist
+                if i > 0:
+                    previous_lesson = lessons[i - 1]
+                    
+                    # Previous must be completed (not just AVAILABLE)
+                    if not previous_lesson.completed_at:
+                        print(f"Previous lesson {previous_lesson.id} not completed yet.")
+                        return None
+                
+                # Ready to unlock!
+                # Schedule controlled by: active_days + lesson_time
+                print(f"Lesson {lesson.id} ready to unlock!")
                 return lesson
         
         return None

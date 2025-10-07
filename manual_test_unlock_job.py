@@ -157,11 +157,11 @@ def main():
                         if previous_lesson and previous_lesson.completed_at:
                             days_since_completion = (datetime.now() - previous_lesson.completed_at.replace(tzinfo=None)).days
                             if days_since_completion >= 1:
-                                print(f"    Unlock Status: READY TO UNLOCK ✅")
+                                print(f"    Unlock Status: READY TO UNLOCK")
                             else:
                                 print(f"    Unlock Status: Waiting for previous lesson completion")
                         else:
-                            print(f"    Unlock Status: READY TO UNLOCK ✅ (First lesson)")
+                            print(f"    Unlock Status: READY TO UNLOCK (First lesson)")
                     else:
                         print(f"    Unlock Status: Waiting for 1 day to pass")
                 else:
