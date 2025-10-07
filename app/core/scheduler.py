@@ -120,12 +120,12 @@ def daily_backup_job():
 def start_scheduler():
     """Start the background scheduler"""
     try:
-        # Add daily lesson unlock job (runs at midnight)
+        # Add lesson unlock job (runs every hour)
         scheduler.add_job(
             daily_lesson_unlock_job,
-            trigger=CronTrigger(hour=0, minute=0),
-            id='daily_lesson_unlock',
-            name='Daily Lesson Unlock Job',
+            trigger=CronTrigger(minute=0),  # Every hour at minute 0
+            id='hourly_lesson_unlock',
+            name='Hourly Lesson Unlock Job',
             replace_existing=True
         )
         

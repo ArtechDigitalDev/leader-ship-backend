@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User
+from app.models.user_preferences import UserPreferences
 from app.schemas.user import UserCreate, UserUpdate
 
 
@@ -39,6 +40,21 @@ def create(db: Session, *, obj_in: UserCreate) -> User:
         is_email_verified=False,  # New users need email verification
     )
     db.add(db_obj)
+    db.flush()  # Get user ID without committing
+    
+    # Create default user preferences
+    preferences = UserPreferences(
+        user_id=db_obj.id,
+        frequency="daily",
+        active_days=["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+        lesson_time="00:00",
+        timezone="ET",
+        days_between_lessons=1,
+        reminder_enabled="true",
+        reminder_time="14:00",
+        reminder_type="1"
+    )
+    db.add(preferences)
     db.commit()
     db.refresh(db_obj)
     return db_obj

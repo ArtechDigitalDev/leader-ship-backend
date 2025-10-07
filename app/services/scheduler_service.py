@@ -8,8 +8,24 @@ from app.models.daily_lesson import DailyLesson
 from app.models.week import Week
 from app.models.user_progress import UserProgress
 from app.models.user_journey import UserJourney, JourneyStatus
+from app.models.user_preferences import UserPreferences
 from app.utils.response import APIException
-
+# {
+#   "frequency": "daily",
+#   "activeDays": [
+#     "mon",
+#     "tue",
+#     "wed",
+#     "thu",
+#     "fri",
+#     "sat",
+#     "sun"
+#   ],
+#   "lessonTime": "00:00",
+#   "reminderTime": "14:00",
+#   "reminderType": "1",
+#   "timezone": "ET"
+# }
 
 class SchedulerService:
     """Service for handling scheduled background tasks"""
@@ -18,38 +34,26 @@ class SchedulerService:
         self.db = db
 
     def unlock_due_lessons(self) -> int:
-        """Unlock lessons based on days_between_lessons and completion time"""
+        """Unlock lessons based on user preferences and completion time"""
         unlocked_count = 0
         
         try:
             # Get all users who have lessons
             users_with_lessons = self.db.query(UserLesson.user_id).distinct().all()
+            print("users_with_lessons", users_with_lessons)
             
             for (user_id,) in users_with_lessons:
+                # Get user preferences
+                user_prefs = self._get_user_preferences(user_id)
+                # print("user_prefs", user_prefs)
+                
                 # Get the next lesson to unlock for this user
                 next_lesson = self._get_next_lesson_to_unlock(user_id)
+                print("next_lesson", next_lesson)
                 
-                if next_lesson:
-                    # Check if enough time has passed since lesson creation
-                    now = datetime.now(timezone.utc)
-                    days_since_creation = (now - next_lesson.created_at).days
-                    days_between_lessons = 1  # Default to 1 day between lessons
-                    
-                    if days_since_creation >= days_between_lessons:
-                        # Check if previous lesson was completed enough days ago
-                        previous_lesson = self._get_previous_lesson_in_sequence(next_lesson)
-                        
-                        if previous_lesson and previous_lesson.completed_at:
-                            days_since_completion = (now - previous_lesson.completed_at).days
-                            
-                            if days_since_completion >= days_between_lessons:
-                                next_lesson.status = LessonStatus.AVAILABLE
-                                unlocked_count += 1
-                                
-                        elif not previous_lesson:
-                            # First lesson in sequence - unlock if enough time passed
-                            next_lesson.status = LessonStatus.AVAILABLE
-                            unlocked_count += 1
+                if next_lesson and self._should_unlock_lesson(next_lesson, user_prefs):
+                    next_lesson.status = LessonStatus.AVAILABLE
+                    unlocked_count += 1
             
             self.db.commit()
             return unlocked_count
@@ -57,6 +61,66 @@ class SchedulerService:
         except Exception as e:
             self.db.rollback()
             raise e
+
+    def _get_user_preferences(self, user_id: int) -> dict:
+        """Get user preferences with defaults"""
+        prefs = self.db.query(UserPreferences).filter(UserPreferences.user_id == user_id).first()
+        
+        if prefs:
+            return {
+                "frequency": prefs.frequency,
+                "active_days": prefs.active_days,
+                "lesson_time": prefs.lesson_time,
+                "timezone": prefs.timezone,
+                "days_between_lessons": prefs.days_between_lessons,
+                "reminder_enabled": prefs.reminder_enabled
+            }
+        else:
+            # Return default preferences
+            return {
+                "frequency": "daily",
+                "active_days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+                "lesson_time": "00:00",
+                "timezone": "ET",
+                "days_between_lessons": 1,
+                "reminder_enabled": "true"
+            }
+
+    def _should_unlock_lesson(self, lesson: UserLesson, user_prefs: dict) -> bool:
+        """Check if lesson should be unlocked based on user preferences"""
+        now = datetime.now(timezone.utc)
+        
+        # Check if enough time has passed since lesson creation
+        days_since_creation = (now - lesson.created_at).days
+        days_between_lessons = user_prefs.get("days_between_lessons", 1)
+        
+        if days_since_creation < days_between_lessons:
+            return False
+        
+        # Check if today is an active day
+        if not self._is_active_day(now, user_prefs["active_days"]):
+            return False
+        
+        # Check if previous lesson was completed
+        previous_lesson = self._get_previous_lesson_in_sequence(lesson)
+        
+        if previous_lesson and previous_lesson.completed_at:
+            days_since_completion = (now - previous_lesson.completed_at).days
+            return days_since_completion >= days_between_lessons
+        elif not previous_lesson:
+            # First lesson in sequence - unlock if enough time passed
+            return True
+        
+        return False
+
+    def _is_active_day(self, now: datetime, active_days: list) -> bool:
+        """Check if current day is in user's active days"""
+        day_mapping = {
+            0: "mon", 1: "tue", 2: "wed", 3: "thu", 
+            4: "fri", 5: "sat", 6: "sun"
+        }
+        current_day = day_mapping[now.weekday()]
+        return current_day in active_days
 
     def _get_previous_lesson_in_sequence(self, current_lesson: UserLesson) -> Optional[UserLesson]:
         """Get the previous lesson in the sequence"""

@@ -256,7 +256,7 @@ def main():
     print("- Lessons unlock after 1 day from creation")
     print("- Only the immediate next lesson unlocks per user")
     print("- Previous lesson must be completed for next to unlock")
-    print("- Scheduler runs daily at midnight (00:00)")
+    print("- Scheduler runs every hour (at minute 0)")
     print("=" * 70)
 
 if __name__ == "__main__":
