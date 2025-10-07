@@ -38,11 +38,13 @@ class SchedulerService:
         unlocked_count = 0
         
         try:
-            # Get all users who have lessons
-            users_with_lessons = self.db.query(UserLesson.user_id).distinct().all()
-            print("users_with_lessons", users_with_lessons)
-            
-            for (user_id,) in users_with_lessons:
+            # Get only users who have LOCKED lessons (performance optimization)
+            users_with_locked_lessons = self.db.query(UserLesson.user_id).filter(
+                UserLesson.status == LessonStatus.LOCKED
+            ).distinct().all()
+            print("users_with_locked_lessons", users_with_locked_lessons)
+
+            for (user_id,) in users_with_locked_lessons:
                 # Get user preferences
                 user_prefs = self._get_user_preferences(user_id)
                 # print("user_prefs", user_prefs)
@@ -179,6 +181,8 @@ class SchedulerService:
             UserLesson.user_id == user_id,
             Week.topic.ilike(user_journey.current_category)
         ).order_by(Week.week_number, DailyLesson.day_number).all()
+
+        print("lessons", lessons)
         
         # Find the first LOCKED lesson
         for lesson in lessons:
