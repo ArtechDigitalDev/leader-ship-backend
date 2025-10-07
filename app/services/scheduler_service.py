@@ -48,10 +48,13 @@ class SchedulerService:
             for user_id in users_to_process:
                 # Get the next lesson to unlock for this user (with all validations)
                 next_lesson = self._get_next_lesson_to_unlock(user_id)
+                print(f"next_lesson for user {user_id}: {next_lesson}")
                 
                 # If we get a lesson, it's ready to unlock (all checks passed)
                 if next_lesson:
+                    now = datetime.now(timezone.utc)
                     next_lesson.status = LessonStatus.AVAILABLE
+                    next_lesson.unlocked_at = now
                     unlocked_count += 1
             
             self.db.commit()
