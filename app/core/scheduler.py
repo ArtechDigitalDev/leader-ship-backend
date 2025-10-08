@@ -60,10 +60,10 @@ def start_scheduler():
             replace_existing=True
         )
         
-        # Add daily reminder job (runs at 9 AM)
+        # Add daily reminder job runs every hour
         scheduler.add_job(
             daily_reminder_job,
-            trigger=CronTrigger(hour=9, minute=0),
+            trigger=CronTrigger(minute=0),
             id='daily_reminder',
             name='Daily Reminder Job',
             replace_existing=True

@@ -1,7 +1,9 @@
 from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_
 
+from app.models.user import User
 from app.models.user_lesson import UserLesson, LessonStatus
 from app.models.daily_lesson import DailyLesson
 from app.models.week import Week
@@ -162,20 +164,195 @@ class SchedulerService:
         return None
 
     def send_daily_reminders(self) -> int:
-        """Send daily reminders to users"""
+        """
+        Send reminders to users with uncompleted AVAILABLE lessons
+        
+        Reminder Logic (Optimized):
+        - reminder_type "0": No reminders
+        - reminder_type "1": One reminder at reminder_time
+        - reminder_type "2": Two reminders (at reminder_time + 2 hours later)
+        
+        Optimization:
+        - Only queries users whose reminder_time matches current hour
+        - Automatically stops when lesson completed
+        - No database tracking needed (stateless)
+        
+        Returns:
+            int: Number of reminders sent
+        """
+        now = datetime.now(timezone.utc)
+        current_hour = now.hour
         sent_count = 0
         
         try:
-            # Get users who haven't completed lessons today
-            # This would integrate with your notification system
+            # Get current day name
+            day_mapping = {0: "mon", 1: "tue", 2: "wed", 3: "thu", 4: "fri", 5: "sat", 6: "sun"}
+            current_day = day_mapping[now.weekday()]
             
-            # For now, just return a placeholder count
-            # In real implementation, this would:
-            # 1. Query users who need reminders
-            # 2. Send notifications (email, push, SMS)
-            # 3. Log the notifications sent
+            print(f"\n{'='*70}")
+            print(f"REMINDER JOB STARTED")
+            print(f"{'='*70}")
+            print(f"⏰ Current time: {now}")
+            print(f"📅 Current day: {current_day}")
+            print(f"🕐 Current hour: {current_hour}")
+            print(f"{'='*70}\n")
+            
+            # Build target hour prefixes for database filtering
+            current_hour_prefix = f"{current_hour:02d}:"  # e.g., "14:"
+            followup_hour = (current_hour - 2) % 24
+            followup_hour_prefix = f"{followup_hour:02d}:"  # e.g., "12:" (for type "2" follow-up)
+            
+            print(f"🔍 QUERY OPTIMIZATION:")
+            print(f"   Looking for reminder_time starting with:")
+            print(f"   - '{current_hour_prefix}xx' (initial reminders)")
+            print(f"   - '{followup_hour_prefix}xx' (follow-up reminders for type 2)")
+            print()
+            
+            # OPTIMIZED QUERY: Only get users whose reminder_time matches current hour
+            # This reduces query from potentially 10,000 users to ~400 users
+            candidates = self.db.query(UserPreferences).filter(
+                UserPreferences.reminder_enabled == "true",
+                UserPreferences.reminder_type != "0",  # Skip type "0" (no reminders)
+                or_(
+                    # Match users with reminder_time at current hour (for initial reminder)
+                    UserPreferences.reminder_time.like(f"{current_hour_prefix}%"),
+                    # Match users with reminder_time 2 hours ago (for follow-up reminder)
+                    and_(
+                        UserPreferences.reminder_type == "2",
+                        UserPreferences.reminder_time.like(f"{followup_hour_prefix}%")
+                    )
+                )
+            ).all()
+            
+            print(f"📊 QUERY RESULTS:")
+            print(f"   Found {len(candidates)} candidate users")
+            print()
+            
+            if len(candidates) == 0:
+                print("ℹ️  No users match current hour - skipping reminder job")
+                print(f"{'='*70}\n")
+                return 0
+            
+            # Process only relevant users
+            for i, prefs in enumerate(candidates, 1):
+                print(f"--- Checking User #{i} (ID: {prefs.user_id}) ---")
+                # Extract reminder hour from reminder_time
+                reminder_hour = int(prefs.reminder_time.split(":")[0])
+                print(f"  reminder_time: {prefs.reminder_time} (hour: {reminder_hour})")
+                print(f"  reminder_type: {prefs.reminder_type}")
+                print(f"  reminder_enabled: {prefs.reminder_enabled}")
+                print(f"  active_days: {prefs.active_days}")
+                
+                # Determine if we should send reminder THIS HOUR
+                should_send = False
+                reminder_reason = ""
+                
+                if prefs.reminder_type == "1":
+                    # Type 1: Send only at reminder_time
+                    should_send = (current_hour == reminder_hour)
+                    reminder_reason = f"Type 1: current({current_hour}) == reminder({reminder_hour})? {should_send}"
+                    
+                elif prefs.reminder_type == "2":
+                    # Type 2: Send at reminder_time AND 2 hours later
+                    second_reminder_hour = (reminder_hour + 2) % 24
+                    is_initial = current_hour == reminder_hour
+                    is_followup = current_hour == second_reminder_hour
+                    should_send = is_initial or is_followup
+                    
+                    if is_initial:
+                        reminder_reason = f"Type 2: Initial reminder (current {current_hour} == reminder {reminder_hour})"
+                    elif is_followup:
+                        reminder_reason = f"Type 2: Follow-up reminder (current {current_hour} == {reminder_hour}+2)"
+                    else:
+                        reminder_reason = f"Type 2: No match (current {current_hour} ≠ {reminder_hour} and ≠ {second_reminder_hour})"
+                
+                print(f"  {reminder_reason}")
+                
+                if not should_send:
+                    print(f"  → SKIP: Hour doesn't match\n")
+                    continue
+                
+                # Check if today is an active day
+                print(f"  Today ({current_day}) in active_days? {current_day in prefs.active_days}")
+                if current_day not in prefs.active_days:
+                    print(f"  → SKIP: Today is not an active day\n")
+                    continue
+                
+                # Check if user has AVAILABLE (uncompleted) lessons
+                available_lessons = self.db.query(UserLesson).filter(
+                    UserLesson.user_id == prefs.user_id,
+                    UserLesson.status == LessonStatus.AVAILABLE
+                ).count()
+                
+                print(f"  AVAILABLE lessons: {available_lessons}")
+                
+                if available_lessons == 0:
+                    print(f"  → SKIP: No AVAILABLE lessons (all completed or locked)\n")
+                    continue  # User already completed all lessons
+                
+                # Send reminder notification
+                is_followup = (current_hour != reminder_hour)
+                print(f"  ✅ SENDING REMINDER ({'Follow-up' if is_followup else 'Initial'})")
+                
+                self._send_notification(
+                    user_id=prefs.user_id,
+                    available_lessons=available_lessons,
+                    reminder_type=prefs.reminder_type,
+                    is_followup=is_followup
+                )
+                sent_count += 1
+                print()
+            
+            print(f"{'='*70}")
+            print(f"REMINDER JOB COMPLETED")
+            print(f"{'='*70}")
+            print(f"📧 Total reminders sent: {sent_count}")
+            print(f"{'='*70}\n")
             
             return sent_count
             
         except Exception as e:
             raise e
+    
+    def _send_notification(self, user_id: int, available_lessons: int, reminder_type: str, is_followup: bool = False):
+        """
+        Send notification to user
+        
+        TODO: Integrate with actual notification service:
+        - Email: SendGrid, AWS SES, Mailgun
+        - Push: Firebase Cloud Messaging, OneSignal
+        - SMS: Twilio, AWS SNS
+        
+        Args:
+            user_id: User ID to send notification to
+            available_lessons: Number of available lessons
+            reminder_type: Type of reminder ("0", "1", "2")
+            is_followup: Whether this is a follow-up reminder
+        """
+        # Build message based on reminder type and status
+        if is_followup:
+            message = f"Follow-up reminder: You still have {available_lessons} lesson(s) to complete today!"
+        else:
+            message = f"You have {available_lessons} lesson(s) to complete today!"
+        
+        # Log notification (replace with actual notification sending)
+        print(f"     📧 Sending to user {user_id}: {message}")
+        
+        # Example future implementation:
+        # from app.services.notification_service import send_email, send_push
+        # 
+        # user = self.db.query(User).filter(User.id == user_id).first()
+        # 
+        # if user.notification_preferences.get("email"):
+        #     send_email(
+        #         to=user.email,
+        #         subject="Complete Your Daily Lesson",
+        #         body=message
+        #     )
+        # 
+        # if user.notification_preferences.get("push"):
+        #     send_push(
+        #         user_id=user_id,
+        #         title="Lesson Reminder",
+        #         body=message
+        #     )
