@@ -70,6 +70,19 @@ async def update_user_preferences(
     # Update only provided fields
     update_data = preferences_data.model_dump(exclude_unset=True)
     
+    # Auto-adjust reminder_enabled based on reminder_type
+    if "reminder_type" in update_data:
+        if update_data["reminder_type"] == "0":
+            # If no reminders, disable reminder_enabled
+            update_data["reminder_enabled"] = "false"
+        elif update_data["reminder_type"] in ["1", "2"]:
+            # If reminders requested, enable reminder_enabled
+            update_data["reminder_enabled"] = "true"
+    
+    # If reminder_enabled is explicitly set to false, set reminder_type to 0
+    if "reminder_enabled" in update_data and update_data["reminder_enabled"] == "false":
+        update_data["reminder_type"] = "0"
+    
     for field, value in update_data.items():
         setattr(preferences, field, value)
     
