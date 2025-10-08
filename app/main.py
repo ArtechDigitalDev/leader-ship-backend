@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import settings
-from app.api.routers import users, assessments, auth, admin, coach, weeks, daily_lessons, assessment_results, user_journeys, user_lessons, user_progress
+from app.api.routers import users, assessments, auth, admin, coach, weeks, daily_lessons, assessment_results, user_journeys, user_lessons, user_progress, user_preferences
 from app.utils.response import APIException, api_exception_handler
 from app.core.scheduler import start_scheduler, stop_scheduler
 
@@ -63,6 +63,7 @@ app.include_router(coach.router, prefix=f"{settings.API_V1_STR}/coach", tags=["c
 app.include_router(user_journeys.router, prefix=f"{settings.API_V1_STR}", tags=["user-journeys"])
 app.include_router(user_lessons.router, prefix=f"{settings.API_V1_STR}", tags=["user-lessons"])
 app.include_router(user_progress.router, prefix=f"{settings.API_V1_STR}", tags=["user-progress"])
+app.include_router(user_preferences.router, prefix=f"{settings.API_V1_STR}", tags=["user-preferences"])
 
 
 @app.get("/")

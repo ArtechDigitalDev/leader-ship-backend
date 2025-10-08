@@ -39,3 +39,9 @@ from .user_progress import (
     UserProgressWithStats,
     ProgressUpdateRequest
 )
+
+from .user_preferences import (
+    UserPreferencesBase,
+    UserPreferencesResponse,
+    UserPreferencesUpdate
+)
