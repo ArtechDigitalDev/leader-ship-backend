@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
+import logging
 
 from app.models.user import User
 from app.models.user_lesson import UserLesson, LessonStatus
@@ -10,6 +11,9 @@ from app.models.week import Week
 from app.models.user_journey import UserJourney, JourneyStatus
 from app.models.user_preferences import UserPreferences
 from app.utils.response import APIException
+from app.utils.email import send_lesson_reminder
+
+logger = logging.getLogger(__name__)
 # {
 #   "frequency": "daily",
 #   "activeDays": [
@@ -316,12 +320,7 @@ class SchedulerService:
     
     def _send_notification(self, user_id: int, available_lessons: int, reminder_type: str, is_followup: bool = False):
         """
-        Send notification to user
-        
-        TODO: Integrate with actual notification service:
-        - Email: SendGrid, AWS SES, Mailgun
-        - Push: Firebase Cloud Messaging, OneSignal
-        - SMS: Twilio, AWS SNS
+        Send email notification to user
         
         Args:
             user_id: User ID to send notification to
@@ -329,30 +328,40 @@ class SchedulerService:
             reminder_type: Type of reminder ("0", "1", "2")
             is_followup: Whether this is a follow-up reminder
         """
-        # Build message based on reminder type and status
-        if is_followup:
-            message = f"Follow-up reminder: You still have {available_lessons} lesson(s) to complete today!"
-        else:
-            message = f"You have {available_lessons} lesson(s) to complete today!"
-        
-        # Log notification (replace with actual notification sending)
-        print(f"     📧 Sending to user {user_id}: {message}")
-        
-        # Example future implementation:
-        # from app.services.notification_service import send_email, send_push
-        # 
-        # user = self.db.query(User).filter(User.id == user_id).first()
-        # 
-        # if user.notification_preferences.get("email"):
-        #     send_email(
-        #         to=user.email,
-        #         subject="Complete Your Daily Lesson",
-        #         body=message
-        #     )
-        # 
-        # if user.notification_preferences.get("push"):
-        #     send_push(
-        #         user_id=user_id,
-        #         title="Lesson Reminder",
-        #         body=message
-        #     )
+        try:
+            # Get user details
+            user = self.db.query(User).filter(User.id == user_id).first()
+            
+            if not user or not user.email:
+                logger.warning(f"User {user_id} not found or has no email")
+                print(f"     ⚠️  User {user_id} not found or has no email")
+                return
+            
+            # Build message for logging
+            if is_followup:
+                message = f"Follow-up reminder: You still have {available_lessons} lesson(s) to complete!"
+            else:
+                message = f"You have {available_lessons} lesson(s) available to complete!"
+            
+            # Log notification attempt
+            print(f"     📧 Sending email to user {user_id} ({user.email}): {message}")
+            
+            # Send email
+            success = send_lesson_reminder(
+                user_email=user.email,
+                user_name=user.full_name or user.username,
+                available_lessons=available_lessons,
+                is_followup=is_followup,
+                reminder_type=reminder_type
+            )
+            
+            if success:
+                logger.info(f"Email sent successfully to user {user_id} ({user.email})")
+                print(f"     ✅ Email sent successfully!")
+            else:
+                logger.error(f"Failed to send email to user {user_id} ({user.email})")
+                print(f"     ❌ Failed to send email")
+                
+        except Exception as e:
+            logger.error(f"Error sending notification to user {user_id}: {str(e)}")
+            print(f"     ❌ Error: {str(e)}")

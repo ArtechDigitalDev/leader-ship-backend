@@ -55,10 +55,13 @@ class Settings(BaseSettings):
     
     # Email settings (optional)
     SMTP_TLS: bool = True
-    SMTP_PORT: Optional[int] = None
-    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: Optional[int] = 587
+    SMTP_HOST: Optional[str] = "smtp.gmail.com"
     SMTP_USER: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
+    FROM_EMAIL: Optional[str] = None
+    FROM_NAME: str = "Leadership Development"
+    APP_URL: str = "https://your-app-url.com"
     
     # Redis settings (optional)
     REDIS_URL: Optional[str] = None
