@@ -20,6 +20,7 @@ class ParticipantOverview(BaseModel):
     current_category: Optional[str] = None
     last_completed_lesson: Optional[str] = None
     last_lesson_completed_date: Optional[datetime] = None
+    current_lesson_missed_count: int = 0  # Number of times current lesson has been missed
 
 
 class CoachDashboardResponse(BaseModel):

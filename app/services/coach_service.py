@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from typing import Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.models.user import User
 from app.models.user_journey import UserJourney
@@ -9,7 +9,69 @@ from app.models.assessment_result import AssessmentResult
 from app.models.week import Week
 from app.models.daily_lesson import DailyLesson
 from app.models.user_progress import UserProgress
+from app.models.user_lesson import UserLesson, LessonStatus
+from app.models.user_preferences import UserPreferences
 from app.schemas.coach import CoachStats, ParticipantOverview, CoachDashboardResponse, CoachStatsResponse
+
+
+def get_current_lesson_miss_count(db: Session, user_id: int) -> int:
+    """
+    Calculate how many times the current available lesson has been missed
+    based on user's active days since it was unlocked
+    
+    Args:
+        db: Database session
+        user_id: User ID to check
+    
+    Returns:
+        int: Number of times the current lesson has been missed
+    """
+    # Get the first AVAILABLE (unlocked but not completed) lesson
+    current_lesson = db.query(UserLesson).filter(
+        UserLesson.user_id == user_id,
+        UserLesson.status == LessonStatus.AVAILABLE,
+        UserLesson.completed_at.is_(None)
+    ).order_by(UserLesson.id).first()
+    
+    if not current_lesson or not current_lesson.unlocked_at:
+        return 0  # No available lesson to miss
+    
+    # Get user preferences for active days
+    user_preferences = db.query(UserPreferences).filter(
+        UserPreferences.user_id == user_id
+    ).first()
+    
+    # Default to all days if no preferences set
+    active_days = user_preferences.active_days if user_preferences else [
+        "mon", "tue", "wed", "thu", "fri", "sat", "sun"
+    ]
+    
+    # Map weekday numbers to day names
+    day_mapping = {
+        0: "mon", 
+        1: "tue", 
+        2: "wed", 
+        3: "thu", 
+        4: "fri", 
+        5: "sat", 
+        6: "sun"
+    }
+    
+    # Get dates
+    unlock_date = current_lesson.unlocked_at.date()
+    today = datetime.now(timezone.utc).date()
+    
+    # Count active days that have passed since unlock (excluding today)
+    missed_count = 0
+    current_date = unlock_date
+    
+    while current_date < today:
+        weekday = day_mapping[current_date.weekday()]
+        if weekday in active_days:
+            missed_count += 1
+        current_date += timedelta(days=1)
+    
+    return missed_count
 
 
 def get_coach_stats(db: Session, coach_id: int) -> CoachStatsResponse:
@@ -91,6 +153,9 @@ def get_participants_overview(db: Session) -> List[ParticipantOverview]:
         categories_completed = user_journey.categories_completed if user_journey and user_journey.categories_completed else []
         current_category = user_journey.current_category if user_journey else None
         
+        # Get current lesson miss count
+        current_lesson_missed_count = get_current_lesson_miss_count(db, user.id)
+        
         participants_overview.append(ParticipantOverview(
             user_name=user.full_name or f"{user.first_name} {user.last_name}",
             email=user.email,
@@ -98,8 +163,12 @@ def get_participants_overview(db: Session) -> List[ParticipantOverview]:
             categories_completed=categories_completed,
             current_category=current_category,
             last_completed_lesson=last_completed_lesson,
-            last_lesson_completed_date=last_lesson_completed_date
+            last_lesson_completed_date=last_lesson_completed_date,
+            current_lesson_missed_count=current_lesson_missed_count
         ))
+    
+    # Sort by current_lesson_missed_count (highest to lowest)
+    participants_overview.sort(key=lambda x: x.current_lesson_missed_count, reverse=True)
     
     return participants_overview
 
