@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status, Form
@@ -234,6 +234,18 @@ def sign_up(
     
     # Create new user
     user = crud_user.create(db, obj_in=user_in)
+    
+    # Send verification email
+    from app.utils.email_verification import create_email_verification_token, send_verification_email
+    
+    verification_token = create_email_verification_token(user.email)
+    print("verification token ---------", verification_token)
+    send_verification_email(
+        user_email=user.email,
+        user_name=user.full_name or user.username,
+        verification_token=verification_token
+    )
+    print("verification email sent ---------")
     
     # Create access token with user data
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -497,3 +509,116 @@ def request_role(
         reason=request.reason,
         requested_at=current_user.role_requested_at
     )
+
+
+@router.get("/verify-email", response_model=APIResponse)
+def verify_email(
+    token: str,
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Verify user's email address using the verification token
+    
+    Query Parameters:
+    - token: JWT verification token from email
+    """
+    from app.utils.email_verification import verify_email_token
+    
+    # Verify token and extract email
+    email = verify_email_token(token)
+    
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token"
+        )
+    
+    # Get user by email
+    user = crud_user.get_by_email(db, email=email)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Check if already verified
+    if user.is_email_verified:
+        return APIResponse(
+            success=True,
+            message="Email already verified",
+            data={
+                "email": user.email,
+                "is_email_verified": True,
+                "verified_at": "Already verified"
+            }
+        )
+    
+    # Update user's email verification status
+    user.is_email_verified = True
+    db.commit()
+    db.refresh(user)
+    
+    return APIResponse(
+        success=True,
+        message="Email verified successfully! You can now access all features.",
+        data={
+            "email": user.email,
+            "is_email_verified": True,
+            "verified_at": datetime.utcnow().isoformat()
+        }
+    )
+
+
+@router.post("/resend-verification-email", response_model=APIResponse)
+def resend_verification_email(
+    email: str,
+    db: Session = Depends(deps.get_db)
+):
+    """
+    Resend verification email to user
+    
+    Request Body:
+    - email: User's email address
+    """
+    # Get user by email
+    user = crud_user.get_by_email(db, email=email)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Check if already verified
+    if user.is_email_verified:
+        return APIResponse(
+            success=False,
+            message="Email already verified. No need to resend.",
+            data=None
+        )
+    
+    # Send verification email
+    from app.utils.email_verification import create_email_verification_token, send_verification_email
+    
+    verification_token = create_email_verification_token(user.email)
+    success = send_verification_email(
+        user_email=user.email,
+        user_name=user.full_name or user.username,
+        verification_token=verification_token
+    )
+    
+    if success:
+        return APIResponse(
+            success=True,
+            message="Verification email sent successfully. Please check your inbox.",
+            data={
+                "email": user.email,
+                "sent_at": datetime.utcnow().isoformat()
+            }
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send verification email. Please try again later."
+        )
