@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = None
     FROM_EMAIL: Optional[str] = None
     FROM_NAME: str = "Leadership Development"
-    APP_URL: str = "https://your-app-url.com"
+    APP_URL: str = "https://leadership-development-platform-self.vercel.app"
     
     # Redis settings (optional)
     REDIS_URL: Optional[str] = None
