@@ -12,6 +12,19 @@ from app.models.user_progress import UserProgress
 from app.models.user_lesson import UserLesson, LessonStatus
 from app.models.user_preferences import UserPreferences
 from app.schemas.coach import CoachStats, ParticipantOverview, CoachDashboardResponse, CoachStatsResponse
+from app.utils.coach_email import send_coach_custom_email
+from pydantic import BaseModel
+from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class EmailResponse(BaseModel):
+    """Email sending response"""
+    success: bool
+    message: str
+    sent_count: Optional[int] = None
 
 
 def get_current_lesson_miss_count(db: Session, user_id: int) -> int:
@@ -236,3 +249,81 @@ def get_coach_participant_details(db: Session, coach_id: int, user_id: int) -> D
             for result in assessment_results
         ]
     }
+
+
+def send_email_to_participant(
+    db: Session,
+    coach_id: int,
+    participant_email: str,
+    subject: str,
+    message: str
+) -> EmailResponse:
+    """
+    Send custom email from coach to a single participant
+    
+    Args:
+        db: Database session
+        coach_id: Coach's user ID
+        participant_email: Participant's email address
+        subject: Email subject
+        message: Email body content
+    
+    Returns:
+        EmailResponse with success status
+    """
+    try:
+        # Get coach details
+        coach = db.query(User).filter(User.id == coach_id).first()
+        if not coach:
+            return EmailResponse(
+                success=False,
+                message="Coach not found"
+            )
+        
+        coach_name = coach.full_name or coach.username
+        
+        # Get participant details
+        participant = db.query(User).filter(
+            User.email == participant_email,
+            User.role == "participant"
+        ).first()
+        
+        if not participant:
+            return EmailResponse(
+                success=False,
+                message=f"Participant with email {participant_email} not found"
+            )
+        
+        participant_name = participant.full_name or participant.username
+        
+        # Send email
+        success = send_coach_custom_email(
+            recipient_email=participant_email,
+            recipient_name=participant_name,
+            subject=subject,
+            message_body=message,
+            coach_name=coach_name
+        )
+        
+        if success:
+            logger.info(f"Coach {coach_id} sent email to participant {participant.id}")
+            return EmailResponse(
+                success=True,
+                message=f"Email sent successfully to {participant_email}",
+                sent_count=1
+            )
+        else:
+            logger.error(f"Failed to send email from coach {coach_id} to {participant_email}")
+            return EmailResponse(
+                success=False,
+                message="Failed to send email"
+            )
+            
+    except Exception as e:
+        logger.error(f"Error sending email: {str(e)}")
+        return EmailResponse(
+            success=False,
+            message=f"Error: {str(e)}"
+        )
+
+

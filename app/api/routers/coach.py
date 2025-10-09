@@ -8,9 +8,14 @@ from app.services.coach_service import (
     get_coach_stats,
     get_participants_overview,
     get_coach_dashboard_data,
-    get_coach_participant_details
+    get_coach_participant_details,
+    send_email_to_participant
 )
-from app.schemas.coach import CoachStatsResponse, CoachDashboardResponse
+from app.schemas.coach import (
+    CoachStatsResponse,
+    CoachDashboardResponse,
+    SendEmailToParticipant
+)
 
 router = APIRouter()
 
@@ -160,3 +165,48 @@ async def get_participant_progress(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to retrieve participant progress: {str(e)}"
         )
+
+
+@router.post("/send-email", response_model=APIResponse)
+async def send_email_to_single_participant(
+    email_data: SendEmailToParticipant,
+    current_user: User = Depends(get_current_coach_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Send custom email from coach to a single participant
+    
+    Request Body:
+    - participant_email: Email address of the participant
+    - subject: Email subject line
+    - message: Email body content (plain text or HTML)
+    """
+    try:
+        result = send_email_to_participant(
+            db=db,
+            coach_id=current_user.id,
+            participant_email=email_data.participant_email,
+            subject=email_data.subject,
+            message=email_data.message
+        )
+        
+        if result.success:
+            return APIResponse(
+                success=True,
+                message=result.message,
+                data={"sent_count": result.sent_count}
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result.message
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send email: {str(e)}"
+        )
+
+

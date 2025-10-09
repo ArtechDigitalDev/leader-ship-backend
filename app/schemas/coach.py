@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime
 
@@ -35,3 +35,10 @@ class CoachStatsResponse(BaseModel):
     avg_completion_rate: float
     journey_started: int
     journey_completed: int
+
+
+class SendEmailToParticipant(BaseModel):
+    """Schema for coach sending email to participant"""
+    participant_email: EmailStr
+    subject: str
+    message: str  # Plain text or HTML message body
