@@ -48,7 +48,7 @@ def create(db: Session, *, obj_in: UserCreate) -> User:
         frequency="daily",
         active_days=["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
         lesson_time="09:00",
-        timezone="UTC",
+        timezone="ET",  # Eastern Time as default
         days_between_lessons=1,
         reminder_enabled="true",
         reminder_time="14:00",

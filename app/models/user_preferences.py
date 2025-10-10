@@ -13,7 +13,7 @@ class UserPreferences(Base):
     frequency = Column(String(20), default="daily")  # daily, weekly
     active_days = Column(JSON, default=["mon", "tue", "wed", "thu", "fri", "sat", "sun"])
     lesson_time = Column(String(5), default="09:00")  # HH:MM format
-    timezone = Column(String(50), default="UTC")  # Default UTC timezone
+    timezone = Column(String(50), default="ET")  # ET, CT, MT, PT, BDT
     
     # Reminder preferences
     reminder_enabled = Column(String(10), default="true")  # true, false

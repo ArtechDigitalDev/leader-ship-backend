@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
@@ -14,6 +14,30 @@ from app.utils.response import APIException
 from app.utils.email import send_lesson_reminder
 
 logger = logging.getLogger(__name__)
+
+# Timezone offset mappings
+TIMEZONE_OFFSETS = {
+    "ET": -5,   # Eastern Time (UTC-5)
+    "CT": -6,   # Central Time (UTC-6)
+    "MT": -7,   # Mountain Time (UTC-7)
+    "PT": -8,   # Pacific Time (UTC-8)
+    "BDT": 6,   # Bangladesh Time (UTC+6)
+}
+
+def get_current_hour_in_timezone(tz_code: str) -> int:
+    """
+    Get current hour in specified timezone
+    
+    Args:
+        tz_code: Timezone code (ET, CT, MT, PT, BDT)
+    
+    Returns:
+        int: Current hour (0-23) in specified timezone
+    """
+    offset_hours = TIMEZONE_OFFSETS.get(tz_code, -5)  # Default to ET
+    tz = timezone(timedelta(hours=offset_hours))
+    now = datetime.now(tz)
+    return now.hour
 # {
 #   "frequency": "daily",
 #   "activeDays": [
@@ -170,76 +194,81 @@ class SchedulerService:
     def send_daily_reminders(self) -> int:
         """
         Send reminders to users with uncompleted AVAILABLE lessons
+        Supports multiple timezones (ET, CT, MT, PT, BDT)
         
-        Reminder Logic (Optimized):
+        Reminder Logic:
         - reminder_type "0": No reminders
         - reminder_type "1": One reminder at reminder_time
         - reminder_type "2": Two reminders (at reminder_time + 2 hours later)
         
         Optimization:
-        - Only queries users whose reminder_time matches current hour
-        - Automatically stops when lesson completed
-        - No database tracking needed (stateless)
+        - Calculate current hour for each timezone
+        - Filter users by matching reminder_time hours only
         
         Returns:
             int: Number of reminders sent
         """
         now = datetime.now(timezone.utc)
-        current_hour = now.hour
         sent_count = 0
         
         try:
-            # Get current day name
-            day_mapping = {0: "mon", 1: "tue", 2: "wed", 3: "thu", 4: "fri", 5: "sat", 6: "sun"}
-            current_day = day_mapping[now.weekday()]
-            
             print(f"\n{'='*70}")
-            print(f"REMINDER JOB STARTED")
+            print(f"REMINDER JOB STARTED (Multi-Timezone Optimized)")
             print(f"{'='*70}")
-            print(f"⏰ Current time: {now}")
-            print(f"📅 Current day: {current_day}")
-            print(f"🕐 Current hour: {current_hour}")
+            print(f"⏰ Current UTC time: {now}")
             print(f"{'='*70}\n")
             
-            # Build target hour prefixes for database filtering
-            current_hour_prefix = f"{current_hour:02d}:"  # e.g., "14:"
-            followup_hour = (current_hour - 2) % 24
-            followup_hour_prefix = f"{followup_hour:02d}:"  # e.g., "12:" (for type "2" follow-up)
+            # Calculate current hour for each timezone
+            timezone_hours = {}
+            for tz_code in ["ET", "CT", "MT", "PT", "BDT"]:
+                tz_hour = get_current_hour_in_timezone(tz_code)
+                timezone_hours[tz_code] = tz_hour
+                print(f"{tz_code}: Current hour = {tz_hour:02d}:00")
             
-            print(f"🔍 QUERY OPTIMIZATION:")
-            print(f"   Looking for reminder_time starting with:")
-            print(f"   - '{current_hour_prefix}xx' (initial reminders)")
-            print(f"   - '{followup_hour_prefix}xx' (follow-up reminders for type 2)")
-            print()
+            # Build list of all possible reminder hours to match
+            # For type "1": just the reminder hour
+            # For type "2": reminder hour AND reminder+2 hour
+            target_hours = set()
+            for tz_hour in timezone_hours.values():
+                target_hours.add(tz_hour)  # Initial reminder
+                target_hours.add((tz_hour - 2) % 24)  # Follow-up (2h ago was initial)
             
-            # OPTIMIZED QUERY: Only get users whose reminder_time matches current hour
-            # This reduces query from potentially 10,000 users to ~400 users
+            print(f"\n🔍 Target hours to check: {sorted(target_hours)}")
+            
+            # Build query conditions for matching hours
+            hour_conditions = []
+            for hour in target_hours:
+                hour_prefix = f"{hour:02d}:"
+                hour_conditions.append(UserPreferences.reminder_time.like(f"{hour_prefix}%"))
+            
+            # OPTIMIZED QUERY: Only get users with matching reminder_time hours
             candidates = self.db.query(UserPreferences).filter(
                 UserPreferences.reminder_enabled == "true",
-                UserPreferences.reminder_type != "0",  # Skip type "0" (no reminders)
-                or_(
-                    # Match users with reminder_time at current hour (for initial reminder)
-                    UserPreferences.reminder_time.like(f"{current_hour_prefix}%"),
-                    # Match users with reminder_time 2 hours ago (for follow-up reminder)
-                    and_(
-                        UserPreferences.reminder_type == "2",
-                        UserPreferences.reminder_time.like(f"{followup_hour_prefix}%")
-                    )
-                )
+                UserPreferences.reminder_type != "0",
+                or_(*hour_conditions)  # Match any of the target hours
             ).all()
             
-            print(f"📊 QUERY RESULTS:")
-            print(f"   Found {len(candidates)} candidate users")
+            print(f"📊 Users matched by hour optimization: {len(candidates)}")
             print()
             
             if len(candidates) == 0:
-                print("ℹ️  No users match current hour - skipping reminder job")
+                print("ℹ️  No users match current hours")
                 print(f"{'='*70}\n")
                 return 0
+            
+            # Get day mapping
+            day_mapping = {0: "mon", 1: "tue", 2: "wed", 3: "thu", 4: "fri", 5: "sat", 6: "sun"}
             
             # Process only relevant users
             for i, prefs in enumerate(candidates, 1):
                 print(f"--- Checking User #{i} (ID: {prefs.user_id}) ---")
+                
+                # Get current hour in USER's timezone
+                user_tz = prefs.timezone or "ET"
+                user_current_hour = get_current_hour_in_timezone(user_tz)
+                print(f"  timezone: {user_tz}")
+                print(f"  current_hour in {user_tz}: {user_current_hour}")
+                
                 # Extract reminder hour from reminder_time
                 reminder_hour = int(prefs.reminder_time.split(":")[0])
                 print(f"  reminder_time: {prefs.reminder_time} (hour: {reminder_hour})")
@@ -247,28 +276,28 @@ class SchedulerService:
                 print(f"  reminder_enabled: {prefs.reminder_enabled}")
                 print(f"  active_days: {prefs.active_days}")
                 
-                # Determine if we should send reminder THIS HOUR
+                # Determine if we should send reminder THIS HOUR (in USER's timezone)
                 should_send = False
                 reminder_reason = ""
                 
                 if prefs.reminder_type == "1":
                     # Type 1: Send only at reminder_time
-                    should_send = (current_hour == reminder_hour)
-                    reminder_reason = f"Type 1: current({current_hour}) == reminder({reminder_hour})? {should_send}"
+                    should_send = (user_current_hour == reminder_hour)
+                    reminder_reason = f"Type 1: current({user_current_hour}) == reminder({reminder_hour})? {should_send}"
                     
                 elif prefs.reminder_type == "2":
                     # Type 2: Send at reminder_time AND 2 hours later
                     second_reminder_hour = (reminder_hour + 2) % 24
-                    is_initial = current_hour == reminder_hour
-                    is_followup = current_hour == second_reminder_hour
+                    is_initial = user_current_hour == reminder_hour
+                    is_followup = user_current_hour == second_reminder_hour
                     should_send = is_initial or is_followup
                     
                     if is_initial:
-                        reminder_reason = f"Type 2: Initial reminder (current {current_hour} == reminder {reminder_hour})"
+                        reminder_reason = f"Type 2: Initial reminder (current {user_current_hour} == reminder {reminder_hour})"
                     elif is_followup:
-                        reminder_reason = f"Type 2: Follow-up reminder (current {current_hour} == {reminder_hour}+2)"
+                        reminder_reason = f"Type 2: Follow-up reminder (current {user_current_hour} == {reminder_hour}+2)"
                     else:
-                        reminder_reason = f"Type 2: No match (current {current_hour} ≠ {reminder_hour} and ≠ {second_reminder_hour})"
+                        reminder_reason = f"Type 2: No match (current {user_current_hour} ≠ {reminder_hour} and ≠ {second_reminder_hour})"
                 
                 print(f"  {reminder_reason}")
                 
@@ -276,9 +305,15 @@ class SchedulerService:
                     print(f"  → SKIP: Hour doesn't match\n")
                     continue
                 
-                # Check if today is an active day
-                print(f"  Today ({current_day}) in active_days? {current_day in prefs.active_days}")
-                if current_day not in prefs.active_days:
+                # Check if today is an active day (in USER's timezone)
+                # Calculate current day in user's timezone
+                offset_hours = TIMEZONE_OFFSETS.get(user_tz, -5)
+                user_tz_obj = timezone(timedelta(hours=offset_hours))
+                user_now_full = datetime.now(user_tz_obj)
+                user_current_day = day_mapping[user_now_full.weekday()]
+                
+                print(f"  Today ({user_current_day}) in active_days? {user_current_day in prefs.active_days}")
+                if user_current_day not in prefs.active_days:
                     print(f"  → SKIP: Today is not an active day\n")
                     continue
                 
@@ -295,7 +330,7 @@ class SchedulerService:
                     continue  # User already completed all lessons
                 
                 # Send reminder notification
-                is_followup = (current_hour != reminder_hour)
+                is_followup = (user_current_hour != reminder_hour)
                 print(f"  ✅ SENDING REMINDER ({'Follow-up' if is_followup else 'Initial'})")
                 
                 self._send_notification(
