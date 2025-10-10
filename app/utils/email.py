@@ -63,7 +63,8 @@ class EmailService:
             message.attach(html_part)
             
             # Send email
-            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=30) as server:
+                server.set_debuglevel(0)  # Set to 1 for detailed SMTP debugging
                 server.starttls()
                 server.login(self.smtp_user, self.smtp_password)
                 server.send_message(message)
@@ -71,8 +72,20 @@ class EmailService:
             logger.info(f"Email sent successfully to {to_email}")
             return True
             
+        except smtplib.SMTPAuthenticationError as e:
+            logger.error(f"SMTP Authentication failed for {to_email}: {str(e)}")
+            logger.error("Check SMTP_USER and SMTP_PASSWORD (use App Password for Gmail)")
+            return False
+        except smtplib.SMTPException as e:
+            logger.error(f"SMTP error sending to {to_email}: {str(e)}")
+            return False
+        except OSError as e:
+            logger.error(f"Network error sending to {to_email}: {str(e)}")
+            logger.error(f"SMTP Config - Host: {self.smtp_host}, Port: {self.smtp_port}")
+            return False
         except Exception as e:
             logger.error(f"Failed to send email to {to_email}: {str(e)}")
+            logger.exception("Full error traceback:")
             return False
 
 
