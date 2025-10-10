@@ -62,88 +62,135 @@ class SchedulerService:
         self.db = db
 
     def unlock_due_lessons(self) -> int:
-        """Unlock lessons based on user preferences and completion time"""
+        """
+        Unlock lessons based on user preferences and their timezone
+        Supports multiple timezones (ET, CT, MT, PT, BDT)
+        """
         unlocked_count = 0
         
         try:
-            # Smart filtering: Get users whose lesson_time matches current hour
-            current_hour = datetime.now(timezone.utc).hour
+            print(f"\n{'='*70}")
+            print(f"LESSON UNLOCK JOB STARTED (Multi-Timezone Optimized)")
+            print(f"{'='*70}")
             
-            # Get users with LOCKED lessons whose lesson_time hour matches current hour
-            users_to_process = self._get_users_for_current_hour(current_hour)
-            print(f"users_to_process for hour {current_hour}: {users_to_process}")
+            # Get users to process (optimized by timezone hours)
+            users_to_process = self._get_users_for_current_hour()
+            print(f"📊 Users to process: {len(users_to_process)}")
  
             for user_id in users_to_process:
                 # Get the next lesson to unlock for this user (with all validations)
                 next_lesson = self._get_next_lesson_to_unlock(user_id)
-                print(f"next_lesson for user {user_id}: {next_lesson}")
                 
                 # If we get a lesson, it's ready to unlock (all checks passed)
                 if next_lesson:
-                    now = datetime.now(timezone.utc)
+                    # Get user's timezone for timestamp
+                    prefs = self.db.query(UserPreferences).filter(
+                        UserPreferences.user_id == user_id
+                    ).first()
+                    user_tz = prefs.timezone if prefs else "ET"
+                    
+                    # Set timestamp in user's timezone
+                    offset_hours = TIMEZONE_OFFSETS.get(user_tz, -5)
+                    user_tz_obj = timezone(timedelta(hours=offset_hours))
+                    now_user_tz = datetime.now(user_tz_obj)
+                    
                     next_lesson.status = LessonStatus.AVAILABLE
-                    next_lesson.unlocked_at = now
+                    next_lesson.unlocked_at = now_user_tz
                     unlocked_count += 1
+                    print(f"✅ Unlocked lesson {next_lesson.id} for user {user_id} ({user_tz})")
             
             self.db.commit()
+            print(f"\n{'='*70}")
+            print(f"LESSON UNLOCK COMPLETED: {unlocked_count} lessons unlocked")
+            print(f"{'='*70}\n")
             return unlocked_count
             
         except Exception as e:
             self.db.rollback()
             raise e
 
-    def _get_users_for_current_hour(self, current_hour: int) -> list:
+    def _get_users_for_current_hour(self) -> list:
         """
-        Get users for current hour using OPTIMAL filtering order
+        Get users for current hour with multi-timezone support and optimization
         
         Optimized approach:
-        1. Filter by active_day (today) - from UserPreferences
-        2. Filter by lesson_time (current hour) - from UserPreferences  
-        3. Check LOCKED lessons (only for filtered users)
+        1. Calculate current hour for each timezone
+        2. Filter by matching lesson_time hours (database level)
+        3. Check each user's timezone and active_day
+        4. Check LOCKED lessons only for matched users
         
         Why better?
-        - Start with smallest dataset (preferences)
-        - Then check larger dataset (lessons) only for relevant users
-        - Minimizes database queries and operations
+        - Reduces 10,000 users to ~400 users via database query
+        - Then filters by timezone-specific day/hour
+        - Only checks LOCKED lessons for final candidates
         """
-        now = datetime.now(timezone.utc)
-        print("now", now)
-        
-        # Get current day name
         day_mapping = {0: "mon", 1: "tue", 2: "wed", 3: "thu", 4: "fri", 5: "sat", 6: "sun"}
-        current_day = day_mapping[now.weekday()]
-        print("current_day", current_day)
-        # Step 1 & 2: Filter by active_day AND lesson_time from preferences
-        # This gives us a small set of candidate users
-        all_preferences = self.db.query(UserPreferences).all()
-        print("all_preferences", all_preferences)
-        candidate_users = []
-        for prefs in all_preferences:
-            # Check 1: Is today an active day?
-            if current_day not in prefs.active_days:
+        
+        # Calculate current hour for each timezone
+        timezone_hours = {}
+        for tz_code in ["ET", "CT", "MT", "PT", "BDT"]:
+            tz_hour = get_current_hour_in_timezone(tz_code)
+            timezone_hours[tz_code] = tz_hour
+            print(f"{tz_code}: Current hour = {tz_hour:02d}:00")
+        
+        # Build target hours set
+        target_hours = set(timezone_hours.values())
+        print(f"\n🔍 Target hours: {sorted(target_hours)}")
+        
+        # Build query conditions
+        hour_conditions = []
+        for hour in target_hours:
+            hour_conditions.append(
+                UserPreferences.lesson_time.like(f"{hour:02d}:%")
+            )
+        
+        # OPTIMIZED QUERY: Get users with matching lesson_time hours
+        candidates = self.db.query(UserPreferences).filter(
+            or_(*hour_conditions)
+        ).all()
+        
+        print(f"📊 Hour-matched candidates: {len(candidates)}")
+        
+        if not candidates:
+            return []
+        
+        # Filter by timezone-specific day and hour
+        matched_users = []
+        for prefs in candidates:
+            user_tz = prefs.timezone or "ET"
+            
+            # Get current time in user's timezone
+            offset_hours = TIMEZONE_OFFSETS.get(user_tz, -5)
+            user_tz_obj = timezone(timedelta(hours=offset_hours))
+            user_now = datetime.now(user_tz_obj)
+            user_current_hour = user_now.hour
+            user_current_day = day_mapping[user_now.weekday()]
+            
+            # Check 1: Is today an active day for this user?
+            if user_current_day not in prefs.active_days:
                 continue
-            print("prefs.lesson_time", prefs.lesson_time)
-            # Check 2: Does lesson_time hour match current hour?
+            
+            # Check 2: Does lesson_time hour match current hour in THEIR timezone?
             lesson_hour = int(prefs.lesson_time.split(":")[0])
-            print("lesson_hour", lesson_hour , "current_hour", current_hour)
-            if lesson_hour != current_hour:
+            if lesson_hour != user_current_hour:
                 continue
             
             # Both conditions met
-            candidate_users.append(prefs.user_id)
-        print("candidate_users", candidate_users)
-        # Early return if no candidates
-        if not candidate_users:
+            matched_users.append(prefs.user_id)
+        
+        print(f"📊 Day/hour matched users: {len(matched_users)}")
+        
+        if not matched_users:
             return []
         
-        # Step 3: Check LOCKED lessons ONLY for candidate users
-        # This is much more efficient than checking all users first
+        # Check LOCKED lessons ONLY for matched users
         users_with_locked = self.db.query(UserLesson.user_id).filter(
-            UserLesson.user_id.in_(candidate_users),
+            UserLesson.user_id.in_(matched_users),
             UserLesson.status == LessonStatus.LOCKED
         ).distinct().all()
         
         result = [user_id for (user_id,) in users_with_locked]
+        print(f"📊 Users with LOCKED lessons: {len(result)}\n")
         return result
 
     def _get_next_lesson_to_unlock(self, user_id: int) -> Optional[UserLesson]:
