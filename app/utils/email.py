@@ -1,9 +1,9 @@
 """
 Email utility for sending notifications to users
+Uses Brevo API (not SMTP) for cloud platform compatibility
 """
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 from typing import Optional
 import logging
 from app.core.config import settings
@@ -12,15 +12,22 @@ logger = logging.getLogger(__name__)
 
 
 class EmailService:
-    """Service for sending emails"""
+    """Service for sending emails via Brevo API"""
     
     def __init__(self):
-        self.smtp_host = getattr(settings, 'SMTP_HOST', 'smtp.gmail.com')
-        self.smtp_port = getattr(settings, 'SMTP_PORT', 587)
-        self.smtp_user = getattr(settings, 'SMTP_USER', None)
-        self.smtp_password = getattr(settings, 'SMTP_PASSWORD', None)
-        self.from_email = getattr(settings, 'FROM_EMAIL', self.smtp_user)
+        self.brevo_api_key = getattr(settings, 'BREVO_API_KEY', None)
+        self.from_email = getattr(settings, 'FROM_EMAIL', None)
         self.from_name = getattr(settings, 'FROM_NAME', 'Leadership Development')
+        
+        # Configure Brevo API
+        if self.brevo_api_key:
+            configuration = sib_api_v3_sdk.Configuration()
+            configuration.api_key['api-key'] = self.brevo_api_key
+            self.api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+                sib_api_v3_sdk.ApiClient(configuration)
+            )
+        else:
+            self.api_instance = None
     
     def send_email(
         self,
@@ -30,61 +37,45 @@ class EmailService:
         text_content: Optional[str] = None
     ) -> bool:
         """
-        Send an email
+        Send an email via Brevo API
         
         Args:
             to_email: Recipient email address
             subject: Email subject
             html_content: HTML email body
-            text_content: Plain text email body (optional, defaults to stripped HTML)
+            text_content: Plain text email body (optional)
         
         Returns:
             bool: True if email sent successfully, False otherwise
         """
         try:
-            # Check if SMTP is configured
-            if not self.smtp_user or not self.smtp_password:
-                logger.warning("SMTP credentials not configured. Email not sent.")
+            # Check if Brevo API is configured
+            if not self.brevo_api_key or not self.from_email:
+                logger.warning("Brevo API not configured. Email not sent.")
                 logger.info(f"[MOCK EMAIL] To: {to_email} | Subject: {subject}")
                 return True  # Return True for development/testing
             
-            # Create message
-            message = MIMEMultipart('alternative')
-            message['Subject'] = subject
-            message['From'] = f"{self.from_name} <{self.from_email}>"
-            message['To'] = to_email
+            # Prepare email data
+            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": to_email}],
+                sender={"email": self.from_email, "name": self.from_name},
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content
+            )
             
-            # Attach text and HTML parts
-            if text_content:
-                text_part = MIMEText(text_content, 'plain')
-                message.attach(text_part)
-            
-            html_part = MIMEText(html_content, 'html')
-            message.attach(html_part)
-            
-            # Send email
-            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=30) as server:
-                server.set_debuglevel(0)  # Set to 1 for detailed SMTP debugging
-                server.starttls()
-                server.login(self.smtp_user, self.smtp_password)
-                server.send_message(message)
-            
-            logger.info(f"Email sent successfully to {to_email}")
+            # Send via Brevo API
+            api_response = self.api_instance.send_transac_email(send_smtp_email)
+            logger.info(f"✅ Email sent successfully to {to_email} (Message ID: {api_response.message_id})")
             return True
             
-        except smtplib.SMTPAuthenticationError as e:
-            logger.error(f"SMTP Authentication failed for {to_email}: {str(e)}")
-            logger.error("Check SMTP_USER and SMTP_PASSWORD (use App Password for Gmail)")
-            return False
-        except smtplib.SMTPException as e:
-            logger.error(f"SMTP error sending to {to_email}: {str(e)}")
-            return False
-        except OSError as e:
-            logger.error(f"Network error sending to {to_email}: {str(e)}")
-            logger.error(f"SMTP Config - Host: {self.smtp_host}, Port: {self.smtp_port}")
+        except ApiException as e:
+            logger.error(f"❌ Brevo API error sending to {to_email}: {e}")
+            logger.error(f"Status code: {e.status}, Reason: {e.reason}")
+            logger.error(f"Response body: {e.body}")
             return False
         except Exception as e:
-            logger.error(f"Failed to send email to {to_email}: {str(e)}")
+            logger.error(f"❌ Failed to send email to {to_email}: {str(e)}")
             logger.exception("Full error traceback:")
             return False
 
