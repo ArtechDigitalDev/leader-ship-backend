@@ -263,7 +263,7 @@ def sign_up(
     
     return APIResponse(
         success=True,
-        message="User created successfully",
+        message="Signup successful! A verification email has been sent to your email address. Please verify your email to complete registration.",
         data={
             "user": {
                 "id": user.id,
