@@ -11,6 +11,7 @@ from app.utils.response import APIResponse
 router = APIRouter()
 
 
+@router.post("", response_model=APIResponse)
 @router.post("/", response_model=APIResponse)
 def create_daily_lesson(
     *,
