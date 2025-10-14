@@ -51,6 +51,7 @@ def get_all_assessments(
         data=assessments
     )
 
+@router.post("", response_model=APIResponse)
 @router.post("/", response_model=APIResponse)
 def create_assessment(
     *,
