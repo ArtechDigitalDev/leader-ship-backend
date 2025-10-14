@@ -18,7 +18,7 @@ router = APIRouter()
 @router.get("/", response_model=APIResponse)
 def read_users(
     db: Session = Depends(deps.get_db),
-    current_user: UserModel = Depends(deps.get_current_admin_or_coach_user),
+    current_user: UserModel = Depends(deps.get_current_user),
 ) -> Any:
     """
     Retrieve users.
