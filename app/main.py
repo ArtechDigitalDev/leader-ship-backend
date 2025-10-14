@@ -38,16 +38,18 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
-    allowed_hosts=["*"]
+    expose_headers=["*"],
 )
 
-# Set up trusted host middleware
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=settings.ALLOWED_HOSTS,
-)
+# Set up trusted host middleware (disabled for cloud deployments)
+# Railway/Render/Vercel have their own host validation
+# Uncomment only if you need strict host validation in local dev
+# app.add_middleware(
+#     TrustedHostMiddleware,
+#     allowed_hosts=settings.ALLOWED_HOSTS,
+# )
 
 # Include API routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
