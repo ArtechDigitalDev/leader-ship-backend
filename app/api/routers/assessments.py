@@ -33,6 +33,7 @@ def get_assessments_for_participant(
     )
 
 
+@router.get("", response_model=APIResponse)
 @router.get("/", response_model=APIResponse)
 def get_all_assessments(
     *,
