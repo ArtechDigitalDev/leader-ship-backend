@@ -475,7 +475,7 @@ def get_users_with_missed_lessons(db: Session, min_miss_count: int = 3):
         for user in users:
             miss_count = get_current_lesson_miss_count(db, user.id)
             
-            if miss_count >= min_miss_count:
+            if miss_count == min_miss_count:
                 users_with_misses.append({
                     'user_id': user.id,
                     'email': user.email,
@@ -484,7 +484,7 @@ def get_users_with_missed_lessons(db: Session, min_miss_count: int = 3):
                     'missed_count': miss_count
                 })
         
-        logger.info(f"Found {len(users_with_misses)} users with {min_miss_count}+ missed lessons")
+        logger.info(f"Found {len(users_with_misses)} users with exactly {min_miss_count} missed lessons")
         return users_with_misses
         
     except Exception as e:

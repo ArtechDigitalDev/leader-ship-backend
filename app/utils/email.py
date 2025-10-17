@@ -55,13 +55,23 @@ class EmailService:
                 logger.info(f"[MOCK EMAIL] To: {to_email} | Subject: {subject}")
                 return True  # Return True for development/testing
             
-            # Prepare email data
+            # Prepare email data with anti-spam headers
             send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
                 to=[{"email": to_email}],
                 sender={"email": self.from_email, "name": self.from_name},
                 subject=subject,
                 html_content=html_content,
-                text_content=text_content
+                text_content=text_content,
+                headers={
+                    "X-Mailer": "Leadership Development Platform",
+                    "X-Priority": "3",
+                    "X-MSMail-Priority": "Normal",
+                    "Importance": "Normal",
+                    "List-Unsubscribe": f"<mailto:unsubscribe@{self.from_email.split('@')[1]}>",
+                    "List-Id": "Leadership Development <leadership-dev>",
+                    "X-Support-Type": "educational-support"
+                },
+                tags=["leadership", "support", "educational", "non-promotional"]
             )
             
             # Send via Brevo API

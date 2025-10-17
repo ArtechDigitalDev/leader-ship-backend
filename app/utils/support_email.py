@@ -30,8 +30,8 @@ def create_support_email_content(user_data: Dict[str, Any]) -> tuple[str, str]:
     greeting = f"Hi {user_data['full_name'] or user_data['username']}"
     
     html_content = f"""
-    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: white; padding: 30px; border: 1px solid #ddd;">
             <h2 style="color: #2c3e50; margin-bottom: 20px;">Leadership Development Support</h2>
             <p style="font-size: 16px; margin-bottom: 20px;">{greeting},</p>
             
@@ -42,18 +42,9 @@ def create_support_email_content(user_data: Dict[str, Any]) -> tuple[str, str]:
                 <p style="margin: 0;">We're here to support you on your leadership journey.</p>
             </div>
             
-            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <p style="margin: 0; color: #856404;"><strong>Quick Tips:</strong></p>
-                <ul style="margin: 10px 0 0 20px; color: #856404;">
-                    <li>Take lessons at your own pace</li>
-                    <li>Reach out if you need clarification</li>
-                    <li>Remember: progress matters more than perfection</li>
-                </ul>
-            </div>
-            
             <p style="margin: 30px 0;">
-                <strong>Continue your journey:</strong><br>
-                <a href="https://leadership-development-platform-self.vercel.app" style="color: #3498db; text-decoration: none;">Access Your Lessons</a>
+                <strong>Continue your lessons:</strong><br>
+                <a href="https://leadership-development-platform-self.vercel.app" style="color: #3498db; text-decoration: none;">https://leadership-development-platform-self.vercel.app</a>
             </p>
             
             <p style="color: #666; font-size: 14px;">
@@ -63,7 +54,7 @@ def create_support_email_content(user_data: Dict[str, Any]) -> tuple[str, str]:
             
             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
             <p style="color: #999; font-size: 12px; text-align: center;">
-                You received this email because we care about your learning experience.<br>
+                This is a support email for your learning progress.<br>
                 Reply to this email if you need assistance.
             </p>
         </div>
@@ -81,17 +72,12 @@ def create_support_email_content(user_data: Dict[str, Any]) -> tuple[str, str]:
     
     We're here to support you on your leadership journey.
     
-    Quick Tips:
-    - Take lessons at your own pace
-    - Reach out if you need clarification
-    - Remember: progress matters more than perfection
-    
-    Continue your journey: https://leadership-development-platform-self.vercel.app
+    Continue your lessons: https://leadership-development-platform-self.vercel.app
     
     Best regards,
     Leadership Development Team
     
-    You received this email because we care about your learning experience.
+    This is a support email for your learning progress.
     Reply to this email if you need assistance.
     """
     
