@@ -3,6 +3,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.executors.pool import ThreadPoolExecutor
 from app.core.database import SessionLocal
 from app.services.scheduler_service import SchedulerService
+from app.services.scheduler_service import send_support_email_to_struggling_users
 import logging
 
 # Configure logging
@@ -48,6 +49,19 @@ def daily_reminder_job():
     finally:
         db.close()
 
+def daily_support_email_job():
+    """Send support emails to users with 3+ missed lessons"""
+    db = SessionLocal()
+    try:
+        result = send_support_email_to_struggling_users(db)
+        logger.info(f"Daily support email job completed: {result}")
+        return result
+    except Exception as e:
+        logger.error(f"Daily support email job failed: {e}")
+        raise
+    finally:
+        db.close()
+
 def start_scheduler():
     """Start the background scheduler"""
     try:
@@ -66,6 +80,15 @@ def start_scheduler():
             trigger=CronTrigger(minute=0),
             id='daily_reminder',
             name='Daily Reminder Job',
+            replace_existing=True
+        )
+        
+        # Add daily support email job (runs once daily at 9 AM)
+        scheduler.add_job(
+            daily_support_email_job,
+            trigger=CronTrigger(hour=9, minute=0),  # Every day at 9:00 AM
+            id='daily_support_email',
+            name='Daily Support Email Job',
             replace_existing=True
         )
         

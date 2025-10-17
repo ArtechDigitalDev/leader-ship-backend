@@ -447,3 +447,114 @@ class SchedulerService:
         except Exception as e:
             logger.error(f"Error sending notification to user {user_id}: {str(e)}")
             print(f"     ❌ Error: {str(e)}")
+
+
+# Support email functions
+from app.utils.support_email import create_support_email_content
+from app.utils.email import EmailService
+from app.services.coach_service import get_current_lesson_miss_count
+
+
+def get_users_with_missed_lessons(db: Session, min_miss_count: int = 3):
+    """
+    Get users who have missed lessons more than or equal to min_miss_count
+    
+    Args:
+        db: Database session
+        min_miss_count: Minimum number of missed lessons (default: 3)
+    
+    Returns:
+        List of user data with missed lesson count
+    """
+    try:
+        # Get all users with their preferences
+        users = db.query(User).join(UserPreferences, isouter=True).all()
+        
+        users_with_misses = []
+        
+        for user in users:
+            miss_count = get_current_lesson_miss_count(db, user.id)
+            
+            if miss_count >= min_miss_count:
+                users_with_misses.append({
+                    'user_id': user.id,
+                    'email': user.email,
+                    'full_name': user.full_name,
+                    'username': user.username,
+                    'missed_count': miss_count
+                })
+        
+        logger.info(f"Found {len(users_with_misses)} users with {min_miss_count}+ missed lessons")
+        return users_with_misses
+        
+    except Exception as e:
+        logger.error(f"Error getting users with missed lessons: {e}")
+        return []
+
+
+def send_support_email_to_struggling_users(db: Session, min_miss_count: int = 3):
+    """
+    Send support emails to users who have missed lessons
+    
+    Args:
+        db: Database session
+        min_miss_count: Minimum number of missed lessons (default: 3)
+    
+    Returns:
+        dict: Results of email sending
+    """
+    try:
+        email_service = EmailService()
+        users_with_misses = get_users_with_missed_lessons(db, min_miss_count=min_miss_count)
+        
+        sent_count = 0
+        failed_count = 0
+        failed_emails = []
+        
+        for user_data in users_with_misses:
+            try:
+                # Create email content
+                html_content, text_content = create_support_email_content(user_data)
+                
+                # Send email
+                success = email_service.send_email(
+                    to_email=user_data['email'],
+                    subject="We're here to help with your lessons",
+                    html_content=html_content,
+                    text_content=text_content
+                )
+                
+                if success:
+                    sent_count += 1
+                    logger.info(f"Support email sent to {user_data['email']} (missed: {user_data['missed_count']})")
+                else:
+                    failed_count += 1
+                    failed_emails.append(user_data['email'])
+                    logger.error(f"Failed to send support email to {user_data['email']}")
+                    
+            except Exception as e:
+                failed_count += 1
+                failed_emails.append(user_data['email'])
+                logger.error(f"Error sending support email to {user_data['email']}: {e}")
+        
+        result = {
+            'total_users': len(users_with_misses),
+            'emails_sent': sent_count,
+            'emails_failed': failed_count,
+            'failed_emails': failed_emails,
+            'success': sent_count > 0
+        }
+        
+        logger.info(f"Support email job completed: {result}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in send_support_email_to_struggling_users: {e}")
+        return {
+            'total_users': 0,
+            'emails_sent': 0,
+            'emails_failed': 0,
+            'failed_emails': [],
+            'success': False,
+            'error': str(e)
+        }
