@@ -83,10 +83,10 @@ def start_scheduler():
             replace_existing=True
         )
         
-        # Add daily support email job (runs once daily at 4:25 PM BDT)
+        # Add daily support email job (runs once daily at 10:00 AM Eastern Time)
         scheduler.add_job(
             daily_support_email_job,
-            trigger=CronTrigger(hour=10, minute=25, timezone='UTC'),  # 4:25 PM BDT = 10:25 AM UTC
+            trigger=CronTrigger(hour=15, minute=0, timezone='UTC'),  # 10:00 AM ET = 3:00 PM UTC
             id='daily_support_email',
             name='Daily Support Email Job',
             replace_existing=True
