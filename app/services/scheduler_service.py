@@ -12,6 +12,7 @@ from app.models.user_journey import UserJourney, JourneyStatus
 from app.models.user_preferences import UserPreferences
 from app.utils.response import APIException
 from app.utils.email import send_lesson_reminder
+from app.utils.sms import sms_service
 
 logger = logging.getLogger(__name__)
 
@@ -402,7 +403,7 @@ class SchedulerService:
     
     def _send_notification(self, user_id: int, available_lessons: int, reminder_type: str, is_followup: bool = False):
         """
-        Send email notification to user
+        Send email and SMS notification to user
         
         Args:
             user_id: User ID to send notification to
@@ -414,9 +415,9 @@ class SchedulerService:
             # Get user details
             user = self.db.query(User).filter(User.id == user_id).first()
             
-            if not user or not user.email:
-                logger.warning(f"User {user_id} not found or has no email")
-                print(f"     ⚠️  User {user_id} not found or has no email")
+            if not user:
+                logger.warning(f"User {user_id} not found")
+                print(f"     ⚠️  User {user_id} not found")
                 return
             
             # Build message for logging
@@ -425,24 +426,44 @@ class SchedulerService:
             else:
                 message = f"You have {available_lessons} lesson(s) available to complete!"
             
-            # Log notification attempt
-            print(f"     📧 Sending email to user {user_id} ({user.email}): {message}")
+            # # Send EMAIL notification
+            # if user.email:
+            #     print(f"     📧 Sending email to user {user_id} ({user.email}): {message}")
+                
+            #     email_success = send_lesson_reminder(
+            #         user_email=user.email,
+            #         user_name=user.full_name or user.username,
+            #         available_lessons=available_lessons,
+            #         is_followup=is_followup,
+            #         reminder_type=reminder_type
+            #     )
+                
+            #     if email_success:
+            #         logger.info(f"Email sent successfully to user {user_id} ({user.email})")
+            #         print(f"     ✅ Email sent successfully!")
+            #     else:
+            #         logger.error(f"Failed to send email to user {user_id} ({user.email})")
+            #         print(f"     ❌ Failed to send email")
+            # else:
+            #     print(f"     ⚠️  User {user_id} has no email address")
             
-            # Send email
-            success = send_lesson_reminder(
-                user_email=user.email,
-                user_name=user.full_name or user.username,
-                available_lessons=available_lessons,
-                is_followup=is_followup,
-                reminder_type=reminder_type
-            )
-            
-            if success:
-                logger.info(f"Email sent successfully to user {user_id} ({user.email})")
-                print(f"     ✅ Email sent successfully!")
+            # Send SMS notification
+            if user.mobile_number:
+                print(f"     📱 Sending SMS to user {user_id} ({user.mobile_number}): {message}")
+                
+                sms_success = sms_service.send_sms(
+                    to_number=user.mobile_number,
+                    message=message
+                )
+                
+                if sms_success:
+                    logger.info(f"SMS sent successfully to user {user_id} ({user.mobile_number})")
+                    print(f"     ✅ SMS sent successfully!")
+                else:
+                    logger.error(f"Failed to send SMS to user {user_id} ({user.mobile_number})")
+                    print(f"     ❌ Failed to send SMS")
             else:
-                logger.error(f"Failed to send email to user {user_id} ({user.email})")
-                print(f"     ❌ Failed to send email")
+                print(f"     ⚠️  User {user_id} has no mobile number")
                 
         except Exception as e:
             logger.error(f"Error sending notification to user {user_id}: {str(e)}")

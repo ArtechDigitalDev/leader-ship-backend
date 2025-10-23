@@ -47,9 +47,9 @@ def display_current_state(db: Session):
     now, current_day, current_hour = get_current_info()
     
     print_separator("CURRENT SYSTEM STATE")
-    print(f"🕐 Current Time: {now}")
-    print(f"📅 Current Day: {current_day}")
-    print(f"⏰ Current Hour: {current_hour}")
+    print(f"Current Time: {now}")
+    print(f"Current Day: {current_day}")
+    print(f"Current Hour: {current_hour}")
     print(f"")
     
     # Count users by reminder_type
@@ -58,7 +58,7 @@ def display_current_state(db: Session):
     type_2 = db.query(UserPreferences).filter(UserPreferences.reminder_type == "2").count()
     total = db.query(UserPreferences).count()
     
-    print(f"📊 User Preferences Summary:")
+    print(f"User Preferences Summary:")
     print(f"   Total Users: {total}")
     print(f"   Type 0 (No reminders): {type_0}")
     print(f"   Type 1 (One reminder): {type_1}")
@@ -70,7 +70,7 @@ def display_current_state(db: Session):
     locked = db.query(UserLesson).filter(UserLesson.status == LessonStatus.LOCKED).count()
     completed = db.query(UserLesson).filter(UserLesson.status == LessonStatus.COMPLETED).count()
     
-    print(f"📚 Lesson Status Summary:")
+    print(f"Lesson Status Summary:")
     print(f"   AVAILABLE: {available}")
     print(f"   LOCKED: {locked}")
     print(f"   COMPLETED: {completed}")
@@ -138,15 +138,15 @@ def test_reminder_job(db: Session):
         sent_count = service.send_daily_reminders()
         
         print_separator("REMINDER JOB RESULT")
-        print(f"✅ Job completed successfully!")
-        print(f"📧 Total reminders sent: {sent_count}")
+        print(f"Job completed successfully!")
+        print(f"Total reminders sent: {sent_count}")
         print()
         
         return sent_count
         
     except Exception as e:
         print_separator("REMINDER JOB ERROR")
-        print(f"❌ Job failed with error:")
+        print(f"Job failed with error:")
         print(f"   {str(e)}")
         print()
         
@@ -202,7 +202,7 @@ def display_query_optimization(db: Session):
         print(f"   Speed improvement: {speedup:.1f}x faster")
         print()
     else:
-        print("⚠️ No users with reminders to compare")
+        print("No users with reminders to compare")
         print()
 
 
@@ -238,10 +238,10 @@ def display_hour_matching_details(db: Session):
     ).all()
     
     if not matching_users:
-        print("❌ No users match current hour")
+        print("No users match current hour")
         return
     
-    print(f"✅ Found {len(matching_users)} matching users:\n")
+    print(f"Found {len(matching_users)} matching users:\n")
     
     for i, prefs in enumerate(matching_users, 1):
         reminder_hour = int(prefs.reminder_time.split(":")[0])

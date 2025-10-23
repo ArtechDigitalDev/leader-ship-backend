@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = None
 
 
-    # Twilio settings
+    # Twilio SMS settings
     TWILIO_ACCOUNT_SID: Optional[str] = None
     TWILIO_AUTH_TOKEN: Optional[str] = None
     TWILIO_PHONE_NUMBER: Optional[str] = None
