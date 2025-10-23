@@ -65,7 +65,12 @@ class Settings(BaseSettings):
     SMTP_HOST: Optional[str] = "smtp.gmail.com"
     SMTP_USER: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
-    
+
+
+    # Twilio settings
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    TWILIO_PHONE_NUMBER: Optional[str] = None
     # Redis settings (optional)
     REDIS_URL: Optional[str] = None
     
