@@ -420,11 +420,11 @@ class SchedulerService:
                 print(f"     User {user_id} not found")
                 return
             
-            # Build message for logging
+            # Build personalized message for logging
             if is_followup:
-                message = f"Follow-up reminder: You still have {available_lessons} lesson(s) to complete!"
+                message = f"Hi {user.full_name}, you have {available_lessons} lesson(s) pending. Complete them to continue your leadership journey."
             else:
-                message = f"You have {available_lessons} lesson(s) available to complete!"
+                message = f"Hello {user.full_name}, your daily leadership lesson is ready. You have {available_lessons} lesson(s) to complete."
             
             # # Send EMAIL notification
             # if user.email:
