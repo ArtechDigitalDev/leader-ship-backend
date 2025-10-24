@@ -8,9 +8,8 @@ Tests:
 2. reminder_type = "1" (One reminder)
 3. reminder_type = "2" (Two reminders)
 4. Active/Inactive days
-5. Lesson completion auto-stop
-6. Hour matching optimization
 """
+import asyncio
 
 import sys
 from datetime import datetime, timezone
@@ -135,7 +134,7 @@ def test_reminder_job(db: Session):
     service = SchedulerService(db)
     
     try:
-        sent_count = service.send_daily_reminders()
+        sent_count = asyncio.run(service.send_daily_reminders())
         
         print_separator("REMINDER JOB RESULT")
         print(f"Job completed successfully!")

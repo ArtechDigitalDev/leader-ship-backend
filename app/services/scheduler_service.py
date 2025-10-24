@@ -76,7 +76,7 @@ class SchedulerService:
             
             # Get users to process (optimized by timezone hours)
             users_to_process = self._get_users_for_current_hour()
-            print(f"📊 Users to process: {len(users_to_process)}")
+            print(f"Users to process: {len(users_to_process)}")
  
             for user_id in users_to_process:
                 # Get the next lesson to unlock for this user (with all validations)
@@ -98,7 +98,7 @@ class SchedulerService:
                     next_lesson.status = LessonStatus.AVAILABLE
                     next_lesson.unlocked_at = now_user_tz
                     unlocked_count += 1
-                    print(f"✅ Unlocked lesson {next_lesson.id} for user {user_id} ({user_tz})")
+                    print(f"Unlocked lesson {next_lesson.id} for user {user_id} ({user_tz})")
             
             self.db.commit()
             print(f"\n{'='*70}")
@@ -136,7 +136,7 @@ class SchedulerService:
         
         # Build target hours set
         target_hours = set(timezone_hours.values())
-        print(f"\n🔍 Target hours: {sorted(target_hours)}")
+        print(f"\nTarget hours: {sorted(target_hours)}")
         
         # Build query conditions
         hour_conditions = []
@@ -150,7 +150,7 @@ class SchedulerService:
             or_(*hour_conditions)
         ).all()
         
-        print(f"📊 Hour-matched candidates: {len(candidates)}")
+        print(f"Hour-matched candidates: {len(candidates)}")
         
         if not candidates:
             return []
@@ -179,7 +179,7 @@ class SchedulerService:
             # Both conditions met
             matched_users.append(prefs.user_id)
         
-        print(f"📊 Day/hour matched users: {len(matched_users)}")
+        print(f"Day/hour matched users: {len(matched_users)}")
         
         if not matched_users:
             return []
@@ -191,7 +191,7 @@ class SchedulerService:
         ).distinct().all()
         
         result = [user_id for (user_id,) in users_with_locked]
-        print(f"📊 Users with LOCKED lessons: {len(result)}\n")
+        print(f"Users with LOCKED lessons: {len(result)}\n")
         return result
 
     def _get_next_lesson_to_unlock(self, user_id: int) -> Optional[UserLesson]:
@@ -239,7 +239,7 @@ class SchedulerService:
         
         return None
 
-    def send_daily_reminders(self) -> int:
+    async def send_daily_reminders(self) -> int:
         """
         Send reminders to users with uncompleted AVAILABLE lessons
         Supports multiple timezones (ET, CT, MT, PT, BDT)
@@ -263,7 +263,7 @@ class SchedulerService:
             print(f"\n{'='*70}")
             print(f"REMINDER JOB STARTED (Multi-Timezone Optimized)")
             print(f"{'='*70}")
-            print(f"⏰ Current UTC time: {now}")
+            print(f"Current UTC time: {now}")
             print(f"{'='*70}\n")
             
             # Calculate current hour for each timezone
@@ -281,7 +281,7 @@ class SchedulerService:
                 target_hours.add(tz_hour)  # Initial reminder
                 target_hours.add((tz_hour - 2) % 24)  # Follow-up (2h ago was initial)
             
-            print(f"\n🔍 Target hours to check: {sorted(target_hours)}")
+            print(f"\nTarget hours to check: {sorted(target_hours)}")
             
             # Build query conditions for matching hours
             hour_conditions = []
@@ -296,11 +296,11 @@ class SchedulerService:
                 or_(*hour_conditions)  # Match any of the target hours
             ).all()
             
-            print(f"📊 Users matched by hour optimization: {len(candidates)}")
+            print(f"Users matched by hour optimization: {len(candidates)}")
             print()
             
             if len(candidates) == 0:
-                print("ℹ️  No users match current hours")
+                print("No users match current hours")
                 print(f"{'='*70}\n")
                 return 0
             
@@ -350,7 +350,7 @@ class SchedulerService:
                 print(f"  {reminder_reason}")
                 
                 if not should_send:
-                    print(f"  → SKIP: Hour doesn't match\n")
+                    print(f"  SKIP: Hour doesn't match\n")
                     continue
                 
                 # Check if today is an active day (in USER's timezone)
@@ -362,7 +362,7 @@ class SchedulerService:
                 
                 print(f"  Today ({user_current_day}) in active_days? {user_current_day in prefs.active_days}")
                 if user_current_day not in prefs.active_days:
-                    print(f"  → SKIP: Today is not an active day\n")
+                    print(f"  SKIP: Today is not an active day\n")
                     continue
                 
                 # Check if user has AVAILABLE (uncompleted) lessons
@@ -374,14 +374,14 @@ class SchedulerService:
                 print(f"  AVAILABLE lessons: {available_lessons}")
                 
                 if available_lessons == 0:
-                    print(f"  → SKIP: No AVAILABLE lessons (all completed or locked)\n")
+                    print(f"  SKIP: No AVAILABLE lessons (all completed or locked)\n")
                     continue  # User already completed all lessons
                 
                 # Send reminder notification
                 is_followup = (user_current_hour != reminder_hour)
-                print(f"  ✅ SENDING REMINDER ({'Follow-up' if is_followup else 'Initial'})")
+                print(f"  SENDING REMINDER ({'Follow-up' if is_followup else 'Initial'})")
                 
-                self._send_notification(
+                await self._send_notification(
                     user_id=prefs.user_id,
                     available_lessons=available_lessons,
                     reminder_type=prefs.reminder_type,
@@ -393,7 +393,7 @@ class SchedulerService:
             print(f"{'='*70}")
             print(f"REMINDER JOB COMPLETED")
             print(f"{'='*70}")
-            print(f"📧 Total reminders sent: {sent_count}")
+            print(f"Total reminders sent: {sent_count}")
             print(f"{'='*70}\n")
             
             return sent_count
@@ -401,7 +401,7 @@ class SchedulerService:
         except Exception as e:
             raise e
     
-    def _send_notification(self, user_id: int, available_lessons: int, reminder_type: str, is_followup: bool = False):
+    async def _send_notification(self, user_id: int, available_lessons: int, reminder_type: str, is_followup: bool = False):
         """
         Send email and SMS notification to user
         
@@ -417,7 +417,7 @@ class SchedulerService:
             
             if not user:
                 logger.warning(f"User {user_id} not found")
-                print(f"     ⚠️  User {user_id} not found")
+                print(f"     User {user_id} not found")
                 return
             
             # Build message for logging
@@ -449,25 +449,25 @@ class SchedulerService:
             
             # Send SMS notification
             if user.mobile_number:
-                print(f"     📱 Sending SMS to user {user_id} ({user.mobile_number}): {message}")
+                print(f"     Sending SMS to user {user_id} ({user.mobile_number}): {message}")
                 
-                sms_success = sms_service.send_sms(
+                sms_success = await sms_service.send_sms(
                     to_number=user.mobile_number,
                     message=message
                 )
                 
                 if sms_success:
                     logger.info(f"SMS sent successfully to user {user_id} ({user.mobile_number})")
-                    print(f"     ✅ SMS sent successfully!")
+                    print(f"     SMS sent successfully!")
                 else:
                     logger.error(f"Failed to send SMS to user {user_id} ({user.mobile_number})")
-                    print(f"     ❌ Failed to send SMS")
+                    print(f"     Failed to send SMS")
             else:
-                print(f"     ⚠️  User {user_id} has no mobile number")
+                print(f"     User {user_id} has no mobile number")
                 
         except Exception as e:
             logger.error(f"Error sending notification to user {user_id}: {str(e)}")
-            print(f"     ❌ Error: {str(e)}")
+            print(f"     Error: {str(e)}")
 
 
 # Support email functions
