@@ -37,10 +37,11 @@ def daily_lesson_unlock_job():
 
 def daily_reminder_job():
     """Send daily reminders to users"""
+    import asyncio
     db = SessionLocal()
     try:
         service = SchedulerService(db)
-        sent_count = service.send_daily_reminders()
+        sent_count = asyncio.run(service.send_daily_reminders())
         logger.info(f"Daily reminder job completed: Sent {sent_count} reminders")
         return sent_count
     except Exception as e:
