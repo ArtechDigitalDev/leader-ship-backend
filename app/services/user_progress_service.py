@@ -9,6 +9,7 @@ from app.models.week import Week
 from app.models.daily_lesson import DailyLesson
 from app.schemas.user_progress import UserProgressCreate, UserProgressUpdate
 from app.utils.response import APIException
+from app.services.coach_service import get_current_lesson_miss_count
 
 
 class UserProgressService:
@@ -145,6 +146,7 @@ class UserProgressService:
                 "last_activity_date": None,
                 "average_points_per_lesson": 0,
                 "days_since_last_activity": 0,
+                "get_current_lesson_miss_day_count": 0,
                 "next_milestone": "Start your first lesson"
             }
         
@@ -179,6 +181,9 @@ class UserProgressService:
             stats["average_points_per_lesson"] = round(
                 user_progress.total_points_earned / user_progress.total_lessons_completed, 2
             )
+        
+        # Get current lesson miss day count
+        stats["get_current_lesson_miss_day_count"] = get_current_lesson_miss_count(self.db, user_id)
         
         # Calculate completion rate
         if user_progress.current_category:

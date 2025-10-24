@@ -53,6 +53,7 @@ class UserProgressWithStats(UserProgress):
     average_points_per_lesson: Optional[float] = None
     completion_rate: Optional[float] = None
     days_since_last_activity: Optional[int] = None
+    get_current_lesson_miss_day_count: Optional[int] = None
     next_milestone: Optional[str] = None
 
 
