@@ -50,7 +50,7 @@ app.add_middleware(
 #     TrustedHostMiddleware,
 #     allowed_hosts=settings.ALLOWED_HOSTS,
 # )
-
+print("...............")
 # Include API routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
