@@ -32,25 +32,22 @@ class SMSService:
     
     def _format_phone_number(self, phone_number: str) -> str:
         """
-        Format phone number for Twilio (ensure it starts with +)
+        Clean and validate phone number for Twilio (assumes country code already included)
         
         Args:
-            phone_number: Raw phone number
+            phone_number: Phone number with country code (e.g., "+8801884658400")
             
         Returns:
-            str: Formatted phone number with country code
+            str: Cleaned phone number (e.g., "+8801884658400")
         """
         # Remove any spaces, dashes, or parentheses
         cleaned = phone_number.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
         
-        # If it doesn't start with +, assume it's a local number and add +1 (US)
+        # Verify it starts with + (country code should be included in database)
         if not cleaned.startswith("+"):
-            # For Bangladesh numbers, add +880
-            if cleaned.startswith("01") and len(cleaned) == 11:
-                cleaned = "+880" + cleaned[1:]  # Remove leading 0, add +880
-            else:
-                # For other numbers, add +1 (US/Canada)
-                cleaned = "+1" + cleaned
+            logger.warning(f"Phone number missing country code: {phone_number}")
+            # If somehow missing +, return as is (will fail Twilio validation)
+            return cleaned
         
         return cleaned
 
