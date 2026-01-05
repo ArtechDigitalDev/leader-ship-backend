@@ -35,19 +35,18 @@ class SMSService:
         Clean and validate phone number for Twilio (assumes country code already included)
         
         Args:
-            phone_number: Phone number with country code (e.g., "+8801884658400")
+            phone_number: Phone number with country code (e.g., "+8801884658400" or "8801884658400")
             
         Returns:
-            str: Cleaned phone number (e.g., "+8801884658400")
+            str: Cleaned phone number with + prefix (e.g., "+8801884658400")
         """
         # Remove any spaces, dashes, or parentheses
-        cleaned = phone_number.replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+        cleaned = phone_number.replace(" ", "").replace("-", "").replace("(", "").replace(")", "").strip()
         
-        # Verify it starts with + (country code should be included in database)
+        # If missing + sign, add it
         if not cleaned.startswith("+"):
-            logger.warning(f"Phone number missing country code: {phone_number}")
-            # If somehow missing +, return as is (will fail Twilio validation)
-            return cleaned
+            logger.warning(f"Phone number missing + prefix, adding it: {phone_number} -> +{cleaned}")
+            cleaned = "+" + cleaned
         
         return cleaned
 
