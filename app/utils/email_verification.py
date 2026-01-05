@@ -80,7 +80,7 @@ def send_verification_email(
     # Create verification link
     verification_link = f"{settings.APP_URL}/verify-email?token={verification_token}"
     
-    subject = "Verify Your Email - Leadership Development"
+    subject = "Verify Your Email - Intent2Lead"
     
     # HTML email template
     html_content = f"""
@@ -141,7 +141,7 @@ def send_verification_email(
         <div class="content">
             <p>Hello {user_name},</p>
             
-            <p>Thank you for signing up for the Leadership Development Platform!</p>
+            <p>Thank you for signing up for Intent2Lead!</p>
             
             <p>To complete your registration and start your leadership journey, please verify your email address by clicking the button below:</p>
             
@@ -162,7 +162,7 @@ def send_verification_email(
             
             <p>
                 Best regards,<br>
-                <strong>Leadership Development Team</strong>
+                <strong>Intent2Lead Team</strong>
             </p>
         </div>
         <div class="footer">
@@ -176,7 +176,7 @@ def send_verification_email(
     text_content = f"""
     Hello {user_name},
     
-    Thank you for signing up for the Leadership Development Platform!
+    Thank you for signing up for Intent2Lead!
     
     To complete your registration, please verify your email address by clicking the link below:
     
@@ -187,7 +187,7 @@ def send_verification_email(
     If you didn't create an account, you can safely ignore this email.
     
     Best regards,
-    Leadership Development Team
+    Intent2Lead Team
     
     ---
     This is an automated email. Please do not reply to this message.
