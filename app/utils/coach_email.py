@@ -83,7 +83,7 @@ def send_coach_custom_email(
                 </p>
             </div>
             <div class="footer">
-                <p>This email was sent by your coach through the Leadership Development Platform.</p>
+                <p>This email was sent by your coach through the {settings.PROJECT_NAME}.</p>
             </div>
         </body>
         </html>
@@ -141,7 +141,7 @@ def send_coach_custom_email(
                 </p>
             </div>
             <div class="footer">
-                <p>This email was sent by your coach through the Leadership Development Platform.</p>
+                <p>This email was sent by your coach through the {settings.PROJECT_NAME}.</p>
             </div>
         </body>
         </html>
@@ -157,7 +157,7 @@ def send_coach_custom_email(
     {coach_name}
     
     ---
-    This email was sent by your coach through the Leadership Development Platform.
+    This email was sent by your coach through the {settings.PROJECT_NAME}.
     """
     
     return email_service.send_email(

@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # API Configuration
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "Leadership Development Platform"
+    PROJECT_NAME: str = "Intent2Lead Platform"
     
     # Security
     SECRET_KEY: str = "your-secret-key-here"
@@ -56,8 +56,8 @@ class Settings(BaseSettings):
     # Email settings - Brevo API (recommended for cloud platforms)
     BREVO_API_KEY: Optional[str] = None  # Brevo API key (starts with xkeysib-)
     FROM_EMAIL: Optional[str] = None
-    FROM_NAME: str = "Leadership Development"
-    APP_URL: str = "https://leadership-development-platform-self.vercel.app"
+    FROM_NAME: str = "Intent 2 Lead"
+    APP_URL: str = "https://www.intent2lead.io"
     
     # Legacy SMTP settings (deprecated - use Brevo API instead)
     SMTP_TLS: bool = True
