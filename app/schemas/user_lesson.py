@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.models.user_lesson import LessonStatus
 
 
@@ -8,6 +8,7 @@ class UserLessonBase(BaseModel):
     status: LessonStatus = LessonStatus.LOCKED
     points_earned: int = 0
     commit_text: Optional[str] = None
+    commit_by_days: Optional[int] = None  # Any number of days (frontend can send any value)
     days_between_lessons: int = 1
 
 
@@ -21,6 +22,7 @@ class UserLessonUpdate(BaseModel):
     status: Optional[LessonStatus] = None
     points_earned: Optional[int] = None
     commit_text: Optional[str] = None
+    commit_by_days: Optional[int] = None
     unlocked_at: Optional[datetime] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -56,6 +58,12 @@ class UserLessonWithDetails(UserLesson):
 
 class LessonCompletionRequest(BaseModel):
     points_earned: int
+    commit_text: Optional[str] = None
+
+
+class LessonCommitRequest(BaseModel):
+    """User commits to complete this lesson within X days (before actual completion)."""
+    commit_by_days: int = Field(..., ge=1, description="By when will you complete this action? (number of days)")
     commit_text: Optional[str] = None
 
 

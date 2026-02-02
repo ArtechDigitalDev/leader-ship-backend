@@ -28,7 +28,8 @@ from .user_lesson import (
     UserLesson,
     UserLessonWithDetails,
     LessonCompletionRequest,
-    LessonUnlockRequest
+    LessonCommitRequest,
+    LessonUnlockRequest,
 )
 
 from .user_progress import (

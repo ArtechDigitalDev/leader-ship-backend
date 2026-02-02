@@ -9,6 +9,7 @@ from app.schemas.user_lesson import (
     UserLesson,
     UserLessonWithDetails,
     LessonCompletionRequest,
+    LessonCommitRequest,
     LessonUnlockRequest,
     UserLessonUpdate
 )
@@ -162,6 +163,25 @@ async def start_lesson(
     return APIResponse(
         success=True,
         message="Lesson started successfully",
+        data=lesson_schema
+    )
+
+
+@router.post("/{lesson_id}/commit")
+async def commit_to_lesson(
+    lesson_id: int,
+    data: LessonCommitRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Commit to complete this lesson within 5, 7, 10, or 14 days. Optional commit_text. Separate from complete."""
+    service = UserLessonService(db)
+    lesson = service.commit_to_lesson(current_user.id, lesson_id, data)
+
+    lesson_schema = UserLesson.model_validate(lesson)
+    return APIResponse(
+        success=True,
+        message="Commit saved successfully",
         data=lesson_schema
     )
 

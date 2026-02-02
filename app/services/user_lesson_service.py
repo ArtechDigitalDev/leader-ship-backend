@@ -7,7 +7,7 @@ from app.models.user_lesson import UserLesson, LessonStatus
 from app.models.user_progress import UserProgress
 from app.models.daily_lesson import DailyLesson
 from app.models.week import Week
-from app.schemas.user_lesson import UserLessonCreate, UserLessonUpdate, LessonCompletionRequest
+from app.schemas.user_lesson import UserLessonCreate, UserLessonUpdate, LessonCompletionRequest, LessonCommitRequest
 from app.utils.response import APIException
 
 
@@ -85,10 +85,11 @@ class UserLessonService:
                 success=False
             )
         
-        # Update lesson
+        # Update lesson (commit_by_days is set earlier via commit route; commit_text optional here)
         user_lesson.status = LessonStatus.COMPLETED
         user_lesson.points_earned = completion_data.points_earned
-        user_lesson.commit_text = completion_data.commit_text
+        if completion_data.commit_text is not None:
+            user_lesson.commit_text = completion_data.commit_text
         user_lesson.completed_at = datetime.utcnow()
         
         # Update user progress
@@ -100,6 +101,25 @@ class UserLessonService:
         self.db.commit()
         self.db.refresh(user_lesson)
         
+        return user_lesson
+
+    def commit_to_lesson(self, user_id: int, lesson_id: int, data: LessonCommitRequest) -> UserLesson:
+        """User commits to complete this lesson within X days (before actual completion). Initial commit_by_days is null."""
+        user_lesson = self.get_user_lesson(user_id, lesson_id)
+
+        if user_lesson.status == LessonStatus.COMPLETED:
+            raise APIException(
+                status_code=400,
+                message="Lesson is already completed",
+                success=False
+            )
+
+        user_lesson.commit_by_days = data.commit_by_days
+        if data.commit_text is not None:
+            user_lesson.commit_text = data.commit_text
+
+        self.db.commit()
+        self.db.refresh(user_lesson)
         return user_lesson
 
     def unlock_lesson_manually(self, user_id: int, lesson_id: int) -> UserLesson:

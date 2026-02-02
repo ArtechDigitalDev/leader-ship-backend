@@ -30,8 +30,8 @@ class WeekUpdate(BaseModel):
     weekly_challenge: Optional[WeeklyChallengeBase] = None
     
     class Config:
-        # Allow setting fields to None for full replacement
-        allow_population_by_field_name = True
+        # Allow setting fields to None for full replacement (Pydantic V2)
+        populate_by_name = True
 
 
 class WeekResponse(WeekBase):
