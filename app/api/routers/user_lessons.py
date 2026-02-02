@@ -88,7 +88,7 @@ async def get_user_lessons_by_growth_focus_category(
         service = UserLessonService(db)
         lessons = service.get_user_lessons_by_category(current_user.id, target_category)
         
-        # Enhance with lesson details
+        # Enhance with lesson details including reflection_prompt and leader_win
         enhanced_lessons = []
         for lesson in lessons:
             lesson_with_details = UserLessonWithDetails(
@@ -96,7 +96,9 @@ async def get_user_lessons_by_growth_focus_category(
                 daily_lesson_title=lesson.daily_lesson.title if lesson.daily_lesson else None,
                 daily_lesson_day_number=lesson.daily_lesson.day_number if lesson.daily_lesson else None,
                 week_topic=lesson.daily_lesson.week.topic if lesson.daily_lesson and lesson.daily_lesson.week else None,
-                week_number=lesson.daily_lesson.week.week_number if lesson.daily_lesson and lesson.daily_lesson.week else None
+                week_number=lesson.daily_lesson.week.week_number if lesson.daily_lesson and lesson.daily_lesson.week else None,
+                reflection_prompt=lesson.daily_lesson.reflection_prompt if lesson.daily_lesson else None,
+                leader_win=lesson.daily_lesson.leader_win if lesson.daily_lesson else None
             )
             enhanced_lessons.append(lesson_with_details)
         
