@@ -23,26 +23,35 @@ async def get_available_lessons(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Get all available lessons for the current user"""
+    """Get the first available lesson for the current user (only 1 lesson)"""
     service = UserLessonService(db)
     lessons = service.get_available_lessons(current_user.id)
     
-    # Enhance with lesson details
-    enhanced_lessons = []
-    for lesson in lessons:
-        lesson_with_details = UserLessonWithDetails(
-            **lesson.__dict__,
-            daily_lesson_title=lesson.daily_lesson.title if lesson.daily_lesson else None,
-            daily_lesson_day_number=lesson.daily_lesson.day_number if lesson.daily_lesson else None,
-            week_topic=lesson.daily_lesson.week.topic if lesson.daily_lesson and lesson.daily_lesson.week else None,
-            week_number=lesson.daily_lesson.week.week_number if lesson.daily_lesson and lesson.daily_lesson.week else None
+    # Take only the first available lesson (if exists)
+    if not lessons:
+        return APIResponse(
+            success=True,
+            message="No available lessons found",
+            data=None
         )
-        enhanced_lessons.append(lesson_with_details)
+    
+    lesson = lessons[0]  # Take first one only
+    
+    # Enhance with lesson details including reflection_prompt and leader_win
+    lesson_with_details = UserLessonWithDetails(
+        **lesson.__dict__,
+        daily_lesson_title=lesson.daily_lesson.title if lesson.daily_lesson else None,
+        daily_lesson_day_number=lesson.daily_lesson.day_number if lesson.daily_lesson else None,
+        week_topic=lesson.daily_lesson.week.topic if lesson.daily_lesson and lesson.daily_lesson.week else None,
+        week_number=lesson.daily_lesson.week.week_number if lesson.daily_lesson and lesson.daily_lesson.week else None,
+        reflection_prompt=lesson.daily_lesson.reflection_prompt if lesson.daily_lesson else None,
+        leader_win=lesson.daily_lesson.leader_win if lesson.daily_lesson else None
+    )
     
     return APIResponse(
         success=True,
-        message="Available lessons retrieved successfully",
-        data=enhanced_lessons
+        message="Available lesson retrieved successfully",
+        data=lesson_with_details
     )
 
 

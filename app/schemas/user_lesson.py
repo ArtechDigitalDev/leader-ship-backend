@@ -54,6 +54,8 @@ class UserLessonWithDetails(UserLesson):
     daily_lesson_day_number: Optional[int] = None
     week_topic: Optional[str] = None
     week_number: Optional[int] = None
+    reflection_prompt: Optional[str] = None
+    leader_win: Optional[str] = None
 
 
 class LessonCompletionRequest(BaseModel):
