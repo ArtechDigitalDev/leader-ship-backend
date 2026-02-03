@@ -377,15 +377,17 @@ class SchedulerService:
                     print(f"  SKIP: No AVAILABLE lessons (all completed or locked)\n")
                     continue  # User already completed all lessons
                 
-                # Get the first available lesson's reflection prompt for SMS
+                # Get the first available lesson's reflection prompt and commit info for SMS
                 first_available_lesson = self.db.query(UserLesson).filter(
                     UserLesson.user_id == prefs.user_id,
                     UserLesson.status == LessonStatus.AVAILABLE
                 ).join(DailyLesson).first()
                 
                 reflection_prompt = ""
+                commit_by_days = None
                 if first_available_lesson and first_available_lesson.daily_lesson:
                     reflection_prompt = first_available_lesson.daily_lesson.reflection_prompt
+                    commit_by_days = first_available_lesson.commit_by_days
                 
                 # Send reminder notification
                 is_followup = (user_current_hour != reminder_hour)
@@ -396,7 +398,8 @@ class SchedulerService:
                     available_lessons=available_lessons,
                     reminder_type=prefs.reminder_type,
                     is_followup=is_followup,
-                    reflection_prompt=reflection_prompt
+                    reflection_prompt=reflection_prompt,
+                    commit_by_days=commit_by_days
                 )
                 sent_count += 1
                 print()
@@ -412,7 +415,7 @@ class SchedulerService:
         except Exception as e:
             raise e
     
-    async def _send_notification(self, user_id: int, available_lessons: int, reminder_type: str, is_followup: bool = False, reflection_prompt: str = ""):
+    async def _send_notification(self, user_id: int, available_lessons: int, reminder_type: str, is_followup: bool = False, reflection_prompt: str = "", commit_by_days: Optional[int] = None):
         """
         Send email and SMS notification to user
         
@@ -422,8 +425,16 @@ class SchedulerService:
             reminder_type: Type of reminder ("0", "1", "2")
             is_followup: Whether this is a follow-up reminder
             reflection_prompt: Reflection prompt from the available lesson
+            commit_by_days: Number of days user committed to complete (if exists)
         """
         try:
+            print("Sending notification to user", user_id)
+            print("Available lessons", available_lessons)
+            print("Reminder type", reminder_type)
+            print("Is followup", is_followup)
+            print("Reflection prompt", reflection_prompt)
+            print("Commit by days", commit_by_days)
+            
             # Get user details
             user = self.db.query(User).filter(User.id == user_id).first()
             
@@ -432,17 +443,31 @@ class SchedulerService:
                 print(f"     User {user_id} not found")
                 return
             
-            # Build personalized message with reflection prompt
-            if reflection_prompt:
-                if is_followup:
-                    message = f"Hi {user.full_name}, you have {available_lessons} lesson(s) pending. Today's task: {reflection_prompt}"
+            # Build personalized message based on commit status
+            if commit_by_days:
+                # User has committed - modify message based on commit_by_days
+                if reflection_prompt:
+                    if is_followup:
+                        message = f"Hi {user.full_name}, you have {available_lessons} lesson(s) pending. You committed to complete within {commit_by_days} days. Task: {reflection_prompt}"
+                    else:
+                        message = f"Hello {user.full_name}, your lesson is ready. You committed to complete within {commit_by_days} days. Task: {reflection_prompt}"
                 else:
-                    message = f"Hello {user.full_name}, your daily leadership lesson is ready. Today's task: {reflection_prompt}"
+                    if is_followup:
+                        message = f"Hi {user.full_name}, you have {available_lessons} lesson(s) pending. You committed to complete within {commit_by_days} days. Complete them to continue your leadership journey."
+                    else:
+                        message = f"Hello {user.full_name}, your lesson is ready. You committed to complete within {commit_by_days} days. You have {available_lessons} lesson(s) to complete."
             else:
-                if is_followup:
-                    message = f"Hi {user.full_name}, you have {available_lessons} lesson(s) pending. Complete them to continue your leadership journey."
+                # No commit - standard message (as before)
+                if reflection_prompt:
+                    if is_followup:
+                        message = f"Hi {user.full_name}, you have {available_lessons} lesson(s) pending. Task: {reflection_prompt}"
+                    else:
+                        message = f"Hello {user.full_name}, your lesson is ready. Task: {reflection_prompt}"
                 else:
-                    message = f"Hello {user.full_name}, your daily leadership lesson is ready. You have {available_lessons} lesson(s) to complete."
+                    if is_followup:
+                        message = f"Hi {user.full_name}, you have {available_lessons} lesson(s) pending. Complete them to continue your leadership journey."
+                    else:
+                        message = f"Hello {user.full_name}, your lesson is ready. You have {available_lessons} lesson(s) to complete."
             
             # # Send EMAIL notification
             # if user.email:
