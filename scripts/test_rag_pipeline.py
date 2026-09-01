@@ -31,13 +31,16 @@ fake_lesson = SimpleNamespace(
     week_id=3,
     week=SimpleNamespace(topic="Consistency"),
     diagnosis_tags=["accountability_issue"],
-    daily_tip={"whenToUse": "When a commitment keeps slipping.", "topTakeaway": "Address it within 48 hours."},
+    daily_tip={"when_to_use": "When a commitment keeps slipping.", "top_takeaway": "Address it within 48 hours."},
     swipe_cards=[
         {"title": "Name the pattern", "content": "Describe what has been happening and for how long."},
         {"title": "Own your part", "content": ["Acknowledge the delay.", "Say it plainly."]},
         {"title": "Tiny", "content": "x"},  # too short -> should be dropped
     ],
     scenario={"story": "A team member misses three deadlines in a row without explanation.",
+              "choices": [{"label": "A", "text": "Ignore it and hope it improves."},
+                          {"label": "B", "text": "Address the pattern directly."}],
+              "correct": "B",
               "explanation": "Address the pattern directly and reset the expectation together."},
     go_deeper=[{"type": "article", "title": "Follow-through", "description": "Why consistency beats intensity in leadership."}],
     reflection_prompt="Where have you let a missed commitment slide this week?",
@@ -45,10 +48,28 @@ fake_lesson = SimpleNamespace(
 )
 
 chunks = build_chunks_for_lesson(fake_lesson)
-# daily_tip + 2 valid swipe cards (tiny one dropped) + scenario + reflection + go_deeper
-check("chunk count (tiny card dropped)", len(chunks), 6)
+# daily_tip + 2 swipe cards + scenario + reflection + leader_win + go_deeper = 7
+check("chunk count (tiny card dropped)", len(chunks), 7)
 check("chunk types", sorted({c["chunk_type"] for c in chunks}),
-      ["daily_tip", "go_deeper", "reflection", "scenario", "swipe_card"])
+      ["daily_tip", "go_deeper", "leader_win", "reflection", "scenario", "swipe_card"])
+check("daily_tip includes takeaway", "Address it within 48 hours" in chunks[0]["content"], True)
+
+# go_deeper: title-only resources must not be skipped
+from app.services.lesson_chunking import _format_go_deeper_item
+
+sample_resources = [
+    {"type": "article", "title": "HBR — The Feedback Fallacy — why feedback needs to be clear.", "description": "", "link": "https://hbr.org/"},
+    {"type": "book", "title": "Thanks for the Feedback by Douglas Stone & Sheila Heen — practical frameworks.", "description": "", "link": ""},
+    {"type": "podcast", "title": "Radical Candor Podcast — Specific Praise and Constructive Feedback.", "description": "", "link": ""},
+    {"type": "video", "title": "Kim Scott — Radical Candor Framework (YouTube)", "description": "", "link": "https://www.youtube.com/results?search_query=kim+scott"},
+]
+for i, item in enumerate(sample_resources):
+    text = _format_go_deeper_item(item)
+    check(f"go_deeper[{i}] not skipped", text is not None and len(text) >= 20, True)
+check("go_deeper article format", _format_go_deeper_item(sample_resources[0]),
+      "[Article] | HBR — The Feedback Fallacy — why feedback needs to be clear. | Link: https://hbr.org/")
+check("go_deeper book format", _format_go_deeper_item(sample_resources[1]),
+      "[Book] | Thanks for the Feedback by Douglas Stone & Sheila Heen — practical frameworks.")
 check("metadata category", chunks[0]["metadata"]["category"], "Consistency")
 check("metadata tags", chunks[0]["metadata"]["diagnosis_tags"], ["accountability_issue"])
 check("list content flattened", any("Acknowledge the delay. Say it plainly." in c["content"] for c in chunks), True)

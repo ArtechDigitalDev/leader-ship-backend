@@ -1,25 +1,65 @@
 """
-Lesson chunking — breaks a DailyLesson into small retrievable text pieces.
+Lesson chunking — breaks a DailyLesson into retrievable pieces aligned with
+DailyLessonBase (app/schemas/daily_lesson.py).
 
-Each chunk is one coherent idea (a swipe card, the daily tip, the scenario...)
-so RAG retrieval can match the user's problem to a specific piece of advice
-instead of a whole lesson. Chunk dicts are consumed by rag_service.ingest_lesson.
+Each major lesson section maps to one or more chunks:
+  daily_tip       → 1 chunk
+  swipe_cards[]   → 1 chunk per card (The Trap / The Shift / The Tool / The Reminder)
+  scenario        → 1 chunk (story + choices + explanation)
+  go_deeper[]     → 1 chunk per resource (type, title, description, link)
+  reflection      → 1 chunk
+  leader_win      → 1 chunk
 """
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from app.models.daily_lesson import DailyLesson
 
 
 def _as_text(value) -> str:
-    """swipe_card content may be a string or a list of strings."""
+    """SwipeCard.content may be a string or a list of strings."""
     if isinstance(value, list):
         return " ".join(str(item) for item in value)
     return str(value) if value else ""
 
 
-def _chunk(chunk_type: str, content: str) -> Optional[dict]:
-    content = " ".join(content.split())  # collapse whitespace
-    if len(content) < 20:  # too short to be a meaningful retrieval unit
+def _pick(data: Dict[str, Any], *keys: str) -> str:
+    """Read a JSON field supporting both snake_case (API schema) and legacy camelCase."""
+    for key in keys:
+        value = data.get(key)
+        if value:
+            return str(value)
+    return ""
+
+
+def _format_go_deeper_item(item: Dict[str, Any]) -> Optional[str]:
+    """
+    Build searchable text for one GoDeeper resource.
+    Title often carries the full summary even when description is empty.
+    """
+    resource_type = (item.get("type") or "resource").strip().title()
+    title = (item.get("title") or "").strip()
+    description = (item.get("description") or "").strip()
+    link = (item.get("link") or "").strip()
+
+    if not title and not description and not link:
+        return None
+
+    parts = [f"[{resource_type}]"]
+    if title:
+        parts.append(title)
+    if description:
+        parts.append(f"Summary: {description}")
+    if link:
+        parts.append(f"Link: {link}")
+
+    return " | ".join(parts)
+
+
+def _chunk(chunk_type: str, content: Optional[str]) -> Optional[dict]:
+    if not content:
+        return None
+    content = " ".join(content.split())
+    if len(content) < 20:
         return None
     return {"chunk_type": chunk_type, "content": content}
 
@@ -27,46 +67,47 @@ def _chunk(chunk_type: str, content: str) -> Optional[dict]:
 def build_chunks_for_lesson(lesson: DailyLesson) -> List[dict]:
     """
     Returns [{"chunk_type", "content", "metadata"}] for one lesson.
-    Typically 5-9 chunks per lesson.
+    Typically 8-10 chunks per lesson (4 swipe cards + other sections).
     """
     chunks: List[dict] = []
 
-    # Daily tip: whenToUse + topTakeaway together form one idea
+    # --- daily_tip (DailyTip) -----------------------------------------------
     tip = lesson.daily_tip or {}
     chunks.append(_chunk(
         "daily_tip",
-        f"{lesson.title}. When to use: {tip.get('whenToUse', '')} "
-        f"Top takeaway: {tip.get('topTakeaway', '')}",
+        f"{lesson.title}. When to use: {_pick(tip, 'when_to_use', 'whenToUse')} "
+        f"Top takeaway: {_pick(tip, 'top_takeaway', 'topTakeaway')}",
     ))
 
-    # Each swipe card is its own retrieval unit
+    # --- swipe_cards (List[SwipeCard]) — one chunk per card -------------------
     for card in (lesson.swipe_cards or []):
         title = card.get("title", "")
         body = _as_text(card.get("content"))
         chunks.append(_chunk("swipe_card", f"{title}: {body}" if title else body))
 
-    # Scenario: the story plus the explanation of the right choice
+    # --- scenario (Scenario) — story, choices, and explanation together -------
     scenario = lesson.scenario or {}
+    choice_lines = [
+        f"{c.get('label', '')}: {c.get('text', '')}"
+        for c in (scenario.get("choices") or [])
+        if c.get("text")
+    ]
     chunks.append(_chunk(
         "scenario",
         f"Scenario: {scenario.get('story', '')} "
-        f"What works: {scenario.get('explanation', '')}",
+        f"Choices: {' | '.join(choice_lines)} "
+        f"Best approach: {scenario.get('explanation', '')}",
     ))
 
-    # Reflection prompt + leader win as one reflective chunk
-    chunks.append(_chunk(
-        "reflection",
-        f"Reflection: {lesson.reflection_prompt or ''} Leader win: {lesson.leader_win or ''}",
-    ))
+    # --- reflection_prompt ----------------------------------------------------
+    chunks.append(_chunk("reflection", f"Reflection: {lesson.reflection_prompt or ''}"))
 
-    # Go-deeper descriptions (links themselves aren't useful text)
-    deeper_texts = [
-        f"{item.get('title', '')}: {item.get('description', '')}"
-        for item in (lesson.go_deeper or [])
-        if item.get("description")
-    ]
-    if deeper_texts:
-        chunks.append(_chunk("go_deeper", " | ".join(deeper_texts)))
+    # --- leader_win -----------------------------------------------------------
+    chunks.append(_chunk("leader_win", f"Leader win: {lesson.leader_win or ''}"))
+
+    # --- go_deeper (List[GoDeeper]) — one chunk per resource ------------------
+    for item in (lesson.go_deeper or []):
+        chunks.append(_chunk("go_deeper", _format_go_deeper_item(item)))
 
     metadata = {
         "lesson_id": lesson.id,

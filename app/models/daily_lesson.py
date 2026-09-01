@@ -12,7 +12,7 @@ class DailyLesson(Base):
     week_id = Column(Integer, ForeignKey("weeks.id"), nullable=False)
     day_number = Column(Integer, nullable=False)
     title = Column(String, nullable=False)
-    daily_tip = Column(JSON, nullable=False)  # {whenToUse: str, topTakeaway: str}
+    daily_tip = Column(JSON, nullable=False)  # {when_to_use, top_takeaway}
     swipe_cards = Column(JSON, nullable=False)  # Array of {title: str, content: str|str[]}
     scenario = Column(JSON, nullable=False)  # {story: str, choices: [], correct: str, explanation: str}
     go_deeper = Column(JSON, nullable=False)  # Array of {type: str, title: str, description?: str, link?: str}
