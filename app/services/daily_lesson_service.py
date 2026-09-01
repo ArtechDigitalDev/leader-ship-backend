@@ -61,6 +61,11 @@ def create_daily_lesson(db: Session, *, obj_in: DailyLessonCreate) -> DailyLesso
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+
+    # Keep the RAG search index in sync (best-effort, never blocks the save)
+    from app.services import rag_service
+    rag_service.reindex_lesson_safely(db, db_obj)
+
     return db_obj
 
 
@@ -112,6 +117,11 @@ def update_daily_lesson(
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+
+    # Content changed -> re-embed this lesson's chunks so the RAG index isn't stale
+    from app.services import rag_service
+    rag_service.reindex_lesson_safely(db, db_obj)
+
     return db_obj
 
 

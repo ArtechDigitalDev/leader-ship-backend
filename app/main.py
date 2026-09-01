@@ -3,12 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import settings
-from app.api.routers import users, assessments, auth, admin, coach, weeks, daily_lessons, assessment_results, user_journeys, user_lessons, user_progress, user_preferences
+from app.api.routers import users, assessments, auth, admin, coach, weeks, daily_lessons, assessment_results, user_journeys, user_lessons, user_progress, user_preferences, coaching_sessions
 from app.utils.response import APIException, api_exception_handler
 from app.core.scheduler import start_scheduler, stop_scheduler
 
 # Import models to ensure they are registered with SQLAlchemy
-from app.models import User, Assessment, AssessmentResult, UserJourney, UserLesson, UserProgress
+from app.models import User, Assessment, AssessmentResult, UserJourney, UserLesson, UserProgress, CoachingSession
 from app.models.week import Week
 from app.models.daily_lesson import DailyLesson
 
@@ -67,6 +67,9 @@ app.include_router(user_journeys.router, prefix=f"{settings.API_V1_STR}", tags=[
 app.include_router(user_lessons.router, prefix=f"{settings.API_V1_STR}", tags=["user-lessons"])
 app.include_router(user_progress.router, prefix=f"{settings.API_V1_STR}", tags=["user-progress"])
 app.include_router(user_preferences.router, prefix=f"{settings.API_V1_STR}", tags=["user-preferences"])
+
+# AI Coaching System (BRD v2)
+app.include_router(coaching_sessions.router, prefix=f"{settings.API_V1_STR}", tags=["coaching-sessions"])
 
 
 @app.get("/")

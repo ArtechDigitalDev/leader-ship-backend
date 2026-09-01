@@ -18,9 +18,13 @@ class DailyLesson(Base):
     go_deeper = Column(JSON, nullable=False)  # Array of {type: str, title: str, description?: str, link?: str}
     reflection_prompt = Column(Text, nullable=False)
     leader_win = Column(Text, nullable=False)
+    # Diagnosis tags for coaching-session recommendations,
+    # e.g. ["accountability_issue", "clarity_issue"]
+    diagnosis_tags = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationship with Week
     week = relationship("Week", back_populates="daily_lessons")
     user_lessons = relationship("UserLesson", back_populates="daily_lesson")
+    chunks = relationship("LessonChunk", back_populates="daily_lesson", cascade="all, delete-orphan")

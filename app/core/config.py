@@ -73,6 +73,15 @@ class Settings(BaseSettings):
     TWILIO_PHONE_NUMBER: Optional[str] = None
     # Redis settings (optional)
     REDIS_URL: Optional[str] = None
+
+    # AI / RAG settings (Phase 2 — coaching guidance + lesson ranking)
+    OPENAI_API_KEY: Optional[str] = None
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_DIMENSIONS: int = 1536
+    RAG_CHAT_MODEL: str = "gpt-4o-mini"
+    RAG_TOP_K: int = 5
+    # Cosine similarity below this -> treat as "nothing relevant found" (BRD: no hallucination)
+    RAG_MIN_SIMILARITY: float = 0.35
     
     model_config = {
         "env_file": ".env",

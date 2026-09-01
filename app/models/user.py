@@ -51,6 +51,7 @@ class User(Base):
     user_lessons = relationship("UserLesson", back_populates="user")
     user_progress = relationship("UserProgress", back_populates="user", uselist=False)
     preferences = relationship("UserPreferences", back_populates="user", uselist=False)
+    coaching_sessions = relationship("CoachingSession", back_populates="user")
     
     def is_admin(self) -> bool:
         """Check if user is admin"""

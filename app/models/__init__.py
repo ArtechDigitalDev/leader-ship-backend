@@ -9,6 +9,8 @@ from .user_journey import UserJourney
 from .user_lesson import UserLesson
 from .user_progress import UserProgress
 from .user_preferences import UserPreferences
+from .coaching_session import CoachingSession
+from .lesson_chunk import LessonChunk
 
 # Import Base from database
 from app.core.database import Base
@@ -23,5 +25,7 @@ __all__ = [
     "UserJourney",
     "UserLesson",
     "UserProgress",
-    "UserPreferences"
+    "UserPreferences",
+    "CoachingSession",
+    "LessonChunk"
 ]
