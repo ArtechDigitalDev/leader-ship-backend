@@ -150,7 +150,7 @@ def _vector_search(
 
         for filt in (
             meta.contains({"diagnosis_tags": [tag]}),
-            LessonChunk.chunk_metadata["category"].astext.in_(categories),
+            meta["category"].astext.in_(categories),
             None,
         ):
             results = run(filt)
@@ -249,6 +249,7 @@ def build_guidance_for_session(db: Session, session: CoachingSession) -> Optiona
 
     try:
         retrieved = retrieve(db, situation, diagnosis_type=session.diagnosis_type)
+        print(f"RAG retrieval successful: {retrieved}")
     except EmbeddingUnavailable as e:
         print(f"RAG retrieval unavailable: {e}")
         return None
@@ -261,6 +262,7 @@ def build_guidance_for_session(db: Session, session: CoachingSession) -> Optiona
         return None
 
     bullets = _generate_guidance_bullets(situation, retrieved)
+    print(f"RAG guidance generation successful: {bullets}")
     if not bullets:
         return None
 
