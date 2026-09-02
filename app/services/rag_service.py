@@ -5,7 +5,7 @@ Hard rules implemented here (BRD):
   - The agent pulls responses ONLY from the knowledge base. The LLM is given
     retrieved excerpts and instructed to use nothing else.
   - If retrieval finds nothing relevant (below RAG_MIN_SIMILARITY), we return
-    None and the caller serves approved fallback content — never a hallucination.
+    None and the caller omits S7 guidance — never a hallucination.
   - Every generated response keeps chunk_ids so guidance traces back to
     approved source content.
 
@@ -234,7 +234,7 @@ def build_guidance_for_session(db: Session, session: CoachingSession) -> Optiona
     """
     Full S7 pipeline: retrieve -> generate. Never raises.
     Returns {"bullets", "source": "rag", "chunk_ids", "lesson_ids"} or None
-    (None -> caller serves decision_tree.GUIDANCE_FALLBACK).
+    (None -> caller omits S7 guidance content).
     """
     if not is_configured():
         return None

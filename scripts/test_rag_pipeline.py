@@ -98,7 +98,7 @@ try:
 finally:
     settings.OPENAI_API_KEY = saved_key
 
-# --- S7 payload falls back when no generated guidance ------------------------
+# --- S7 payload is empty when no generated guidance --------------------------
 from app.services.coaching_session_service import CoachingSessionService
 from app.models.coaching_session import CoachingScreen, DiagnosisType, ActionTiming
 
@@ -114,8 +114,7 @@ fake_cs = SimpleNamespace(
     raw_input_text="",
 )
 payload = service.get_screen_payload(fake_cs)
-check("S7 fallback source", payload["content"]["source"], "fallback")
-check("S7 fallback bullets", len(payload["content"]["bullets"]) >= 3, True)
+check("S7 no guidance when RAG missing", payload["content"], None)
 
 # RAG-cached guidance is served when present
 fake_cs.generated_guidance = {"bullets": ["a", "b", "c"], "source": "rag", "chunk_ids": [1]}

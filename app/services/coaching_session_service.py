@@ -185,8 +185,7 @@ class CoachingSessionService:
         """
         Generate S7 guidance once, when the user is about to see it.
         RAG pipeline (retrieve + LLM) with the result cached on the session;
-        any failure leaves it None and the payload falls back to approved
-        static content (BRD: never hallucinate).
+        any failure leaves it None and S7 content is omitted.
         """
         if session.current_screen != CoachingScreen.S7_GUIDANCE:
             return
@@ -333,12 +332,7 @@ class CoachingSessionService:
                 "statement": decision_tree.DIAGNOSIS_STATEMENTS[session.diagnosis_type],
             }
         elif screen == CoachingScreen.S7_GUIDANCE and session.diagnosis_type:
-            # RAG-generated guidance if the pipeline produced any; otherwise
-            # approved fallback content (BRD: never hallucinate).
-            payload["content"] = session.generated_guidance or {
-                "bullets": decision_tree.GUIDANCE_FALLBACK[session.diagnosis_type],
-                "source": "fallback",
-            }
+            payload["content"] = session.generated_guidance
         elif screen == CoachingScreen.S8_CONVERSATION_BUILDER:
             payload["content"] = {"script": decision_tree.build_opening_script(session)}
         elif screen == CoachingScreen.S9_CONVERSATION_STEPS:

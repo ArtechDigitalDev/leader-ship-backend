@@ -97,7 +97,7 @@ class CoachingSession(Base):
 
     # S7 guidance generated once by the RAG pipeline and cached here, so
     # resuming the session doesn't re-run retrieval/LLM calls.
-    # {"bullets": [...], "source": "rag"|"fallback", "chunk_ids": [...]}
+    # {"bullets": [...], "source": "rag", "chunk_ids": [...]}
     generated_guidance = Column(JSON, nullable=True)
 
     # State machine — allows resuming mid-flow after app close

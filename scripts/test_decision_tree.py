@@ -73,9 +73,8 @@ script = dt.build_opening_script(s)
 check("script includes problem", "reports are late every week" in script, True)
 check("script includes duration", "past few months" in script, True)
 
-# All diagnoses have guidance + statements + category mapping
+# All diagnoses have statements + category mapping
 for d in DiagnosisType:
-    check(f"guidance for {d.value}", len(dt.GUIDANCE_FALLBACK[d]) >= 3, True)
     check(f"statement for {d.value}", bool(dt.DIAGNOSIS_STATEMENTS[d]), True)
     check(f"categories for {d.value}", len(dt.DIAGNOSIS_CATEGORY_MAP[d]) > 0, True)
 

@@ -297,33 +297,6 @@ DIAGNOSIS_CATEGORY_MAP: Dict[DiagnosisType, List[str]] = {
     DiagnosisType.CONTEXT_ISSUE: ["Curiosity", "Connection"],
 }
 
-
-# ---------------------------------------------------------------------------
-# Placeholder guidance content (until the RAG knowledge base is live).
-# BRD S7 fallback rule: never hallucinate — serve approved general content.
-# ---------------------------------------------------------------------------
-
-GUIDANCE_FALLBACK: Dict[DiagnosisType, List[str]] = {
-    DiagnosisType.ACCOUNTABILITY_ISSUE: [
-        "Name the pattern, not the person: describe what has been happening and for how long.",
-        "Own your part: acknowledge that it hasn't been addressed directly before now.",
-        "Reset the expectation clearly and agree on what changes starting today.",
-        "Set a specific check-in date so the new expectation has follow-through.",
-    ],
-    DiagnosisType.CLARITY_ISSUE: [
-        "Start by asking what they understand the expectation to be — don't assume.",
-        "State the expectation in concrete, observable terms.",
-        "Check for agreement: ask them to describe what success looks like.",
-        "Agree on how you'll both know it's on track.",
-    ],
-    DiagnosisType.CONTEXT_ISSUE: [
-        "Open with curiosity, not correction — something has changed for this person.",
-        "Ask an open question about how things are going before raising the issue.",
-        "Listen for the underlying cause before proposing any fix.",
-        "Agree on support first, expectations second.",
-    ],
-}
-
 CONVERSATION_STEPS: List[str] = [
     "Ask your opening question, then stop talking.",
     "Pause. Let them fill the silence — don't rescue them.",
