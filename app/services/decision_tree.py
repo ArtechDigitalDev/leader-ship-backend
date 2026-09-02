@@ -52,6 +52,18 @@ def next_screen(current: CoachingScreen) -> Optional[CoachingScreen]:
     return None
 
 
+def prev_screen(current: CoachingScreen) -> Optional[CoachingScreen]:
+    """Return the previous screen in the flow, or None if current is the first."""
+    index = SCREEN_ORDER.index(current)
+    if index > 0:
+        return SCREEN_ORDER[index - 1]
+    return None
+
+
+# S1–S11: user may navigate back one step at a time during the in-app flow.
+BACK_NAVIGATION_LAST_SCREEN = CoachingScreen.S11_FOLLOW_UP_SCHEDULED
+
+
 # ---------------------------------------------------------------------------
 # Screen definitions (prompt + options shown to the client)
 # ---------------------------------------------------------------------------

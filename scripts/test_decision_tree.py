@@ -52,6 +52,8 @@ check("classify unknown", dt.classify_scenario("xyz gibberish"), ScenarioType.SO
 check("screen count", len(dt.SCREEN_ORDER), 14)
 check("next of S1", dt.next_screen(CoachingScreen.S1_ENTRY), CoachingScreen.S2_USER_INPUT)
 check("next of S14", dt.next_screen(CoachingScreen.S14_LEARNING), None)
+check("prev of S1", dt.prev_screen(CoachingScreen.S1_ENTRY), None)
+check("prev of S5", dt.prev_screen(CoachingScreen.S5_ACCOUNTABILITY), CoachingScreen.S4_DURATION)
 
 # Follow-up scheduling
 now = datetime(2026, 9, 1, 12, 0, 0)

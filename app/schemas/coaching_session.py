@@ -79,6 +79,10 @@ class ScreenPayload(BaseModel):
     prompt: str
     options: List[Dict[str, str]] = Field(default_factory=list, description="[{value, label}] — empty for free-text-only screens")
     content: Optional[Dict[str, Any]] = Field(None, description="Screen-specific generated content")
+    previous_answer: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Saved answer for this screen so the client can pre-fill on back navigation",
+    )
 
 
 class SessionStateResponse(BaseModel):

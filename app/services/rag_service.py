@@ -314,6 +314,7 @@ def rank_lessons_semantically(
             .order_by("best_distance")
             .all()
         )
+        print(f"Rows: {rows}")
     except Exception as e:
         print(f"RAG lesson ranking failed: {e}")
         return None

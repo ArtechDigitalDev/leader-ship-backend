@@ -90,6 +90,26 @@ async def answer_current_screen(
     )
 
 
+@router.post("/{session_id}/back")
+async def go_back_one_screen(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Move one screen backward (S2–S11). Does not change stored answers until
+    the user re-submits via POST /answer on an input screen.
+    """
+    service = CoachingSessionService(db)
+    session = service.go_back(current_user.id, session_id)
+
+    return APIResponse(
+        success=True,
+        message="Moved to previous screen",
+        data=_session_state(service, session),
+    )
+
+
 @router.post("/{session_id}/check-in")
 async def follow_up_check_in(
     session_id: int,

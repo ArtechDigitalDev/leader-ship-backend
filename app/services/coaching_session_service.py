@@ -5,7 +5,7 @@ The service is the single writer for CoachingSession state. Screen
 progression and diagnosis rules live in app/services/decision_tree.py.
 """
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -126,16 +126,59 @@ class CoachingSessionService:
         self.db.refresh(session)
         return session
 
+    def go_back(self, user_id: int, session_id: int) -> CoachingSession:
+        """
+        Move one screen backward (S2–S11). Does not change answers — only
+        current_screen. Re-submitting an input screen clears downstream fields.
+        """
+        session = self.get_session(user_id, session_id)
+        screen = session.current_screen
+
+        if screen == CoachingScreen.S1_ENTRY:
+            raise APIException(status_code=400, message="Cannot go back from the first screen.")
+
+        if screen in {
+            CoachingScreen.S12_CHECK_IN,
+            CoachingScreen.S13_REFLECTION,
+            CoachingScreen.S14_LEARNING,
+        }:
+            raise APIException(
+                status_code=400,
+                message="Back navigation is not available after the commitment step.",
+            )
+
+        if session.status == SessionStatus.AWAITING_ACTION:
+            if screen != CoachingScreen.S11_FOLLOW_UP_SCHEDULED:
+                raise APIException(
+                    status_code=400,
+                    message="Use the check-in endpoint during the follow-up period.",
+                )
+        elif session.status != SessionStatus.IN_PROGRESS:
+            raise APIException(status_code=400, message="This session cannot navigate backward.")
+
+        previous = decision_tree.prev_screen(screen)
+        if previous is None:
+            raise APIException(status_code=400, message="Cannot go back further.")
+
+        if screen == CoachingScreen.S11_FOLLOW_UP_SCHEDULED:
+            session.status = SessionStatus.IN_PROGRESS
+            session.follow_up_scheduled_at = None
+
+        session.current_screen = previous
+        self.db.commit()
+        self.db.refresh(session)
+        return session
+
     # --- Per-screen handlers ------------------------------------------
 
     def _answer_s1(self, session: CoachingSession, option: Optional[str], free_text: Optional[str]):
         """S1: pick a scenario OR type free text. Both must work."""
         if option:
+            self._invalidate_from_raw_input(session)
             session.scenario_type = self._parse_enum(ScenarioType, option, "scenario")
             session.current_screen = CoachingScreen.S2_USER_INPUT
         elif free_text:
-            # User typed their issue directly on S1 — capture it as the raw
-            # input and classify, so we don't ask them to type it again on S2.
+            self._invalidate_from_problem_detail(session)
             session.raw_input_text = free_text
             session.scenario_type = decision_tree.classify_scenario(free_text)
             session.current_screen = CoachingScreen.S3_SPECIFICS
@@ -147,6 +190,7 @@ class CoachingSessionService:
         text = free_text or option
         if not text:
             raise APIException(status_code=400, message="Please describe what's happening.")
+        self._invalidate_from_problem_detail(session)
         session.raw_input_text = text
         if session.scenario_type is None:
             session.scenario_type = decision_tree.classify_scenario(text)
@@ -157,6 +201,7 @@ class CoachingSessionService:
         text = free_text or option
         if not text:
             raise APIException(status_code=400, message="Please describe what specifically isn't happening.")
+        self._invalidate_from_duration(session)
         session.problem_detail = text
         session.current_screen = CoachingScreen.S4_DURATION
 
@@ -165,6 +210,7 @@ class CoachingSessionService:
         value = option or self._duration_from_text(free_text)
         if not value:
             raise APIException(status_code=400, message="Please tell me how long this has been happening.")
+        self._invalidate_from_accountability(session)
         session.duration = self._parse_enum(IssueDuration, value, "duration")
         session.current_screen = CoachingScreen.S5_ACCOUNTABILITY
 
@@ -174,10 +220,10 @@ class CoachingSessionService:
         with follow-up intervals halved later. Then diagnosis runs immediately.
         """
         answer = self._parse_yes_no(option or free_text)
+        self._invalidate_commitment(session)
+        session.generated_guidance = None
         session.accountability_flag = answer
-        if answer is False:
-            session.is_avoidance_case = True
-
+        session.is_avoidance_case = not answer
         session.diagnosis_type = decision_tree.diagnose(session)
         session.current_screen = CoachingScreen.S6_DIAGNOSIS
 
@@ -282,6 +328,7 @@ class CoachingSessionService:
             .order_by(Week.week_number, DailyLesson.day_number)
             .all()
         )
+        print(f"Candidates: {len(candidates)}")
 
         # Semantic ranking: order candidates by how well their content matches
         # the user's actual problem. Falls back to tag/week order when RAG
@@ -290,6 +337,7 @@ class CoachingSessionService:
         ranked_ids = rag_service.rank_lessons_semantically(
             self.db, session.problem_detail or "", [c.id for c in candidates]
         )
+        print(f"Ranked IDs: {ranked_ids}")
         if ranked_ids:
             position = {lesson_id: i for i, lesson_id in enumerate(ranked_ids)}
             candidates.sort(key=lambda l: position.get(l.id, len(position)))
@@ -324,6 +372,7 @@ class CoachingSessionService:
             "prompt": definition["prompt"],
             "options": definition["options"],
             "content": None,
+            "previous_answer": self._previous_answer_for_screen(session, screen),
         }
 
         if screen == CoachingScreen.S6_DIAGNOSIS and session.diagnosis_type:
@@ -352,6 +401,55 @@ class CoachingSessionService:
             }
 
         return payload
+
+    def _previous_answer_for_screen(
+        self, session: CoachingSession, screen: CoachingScreen
+    ) -> Optional[Dict[str, Any]]:
+        """Pre-fill hint for the client when the user navigates back."""
+        if screen == CoachingScreen.S1_ENTRY:
+            if session.scenario_type:
+                return {"option": session.scenario_type.value}
+            if session.raw_input_text:
+                return {"free_text": session.raw_input_text}
+            return None
+        if screen == CoachingScreen.S2_USER_INPUT:
+            return {"free_text": session.raw_input_text} if session.raw_input_text else None
+        if screen == CoachingScreen.S3_SPECIFICS:
+            return {"free_text": session.problem_detail} if session.problem_detail else None
+        if screen == CoachingScreen.S4_DURATION:
+            return {"option": session.duration.value} if session.duration else None
+        if screen == CoachingScreen.S5_ACCOUNTABILITY:
+            if session.accountability_flag is None:
+                return None
+            return {"option": "yes" if session.accountability_flag else "no"}
+        if screen == CoachingScreen.S10_COMMITMENT:
+            return {"option": session.action_timing.value} if session.action_timing else None
+        return None
+
+    def _invalidate_from_raw_input(self, session: CoachingSession) -> None:
+        session.raw_input_text = None
+        self._invalidate_from_problem_detail(session)
+
+    def _invalidate_from_problem_detail(self, session: CoachingSession) -> None:
+        session.problem_detail = None
+        self._invalidate_from_duration(session)
+
+    def _invalidate_from_duration(self, session: CoachingSession) -> None:
+        session.duration = None
+        self._invalidate_from_accountability(session)
+
+    def _invalidate_from_accountability(self, session: CoachingSession) -> None:
+        session.accountability_flag = None
+        session.is_avoidance_case = False
+        session.diagnosis_type = None
+        session.generated_guidance = None
+        self._invalidate_commitment(session)
+
+    def _invalidate_commitment(self, session: CoachingSession) -> None:
+        session.action_timing = None
+        session.follow_up_scheduled_at = None
+        if session.status == SessionStatus.AWAITING_ACTION:
+            session.status = SessionStatus.IN_PROGRESS
 
     # ------------------------------------------------------------------
     # Input parsing helpers
