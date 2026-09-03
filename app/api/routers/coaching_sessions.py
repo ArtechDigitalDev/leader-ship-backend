@@ -31,16 +31,15 @@ async def start_coaching_session(
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Start a new coaching session, or resume the in-progress one.
-    BRD: the session must survive app close — never restart mid-flow.
+    Resume an open session (in_progress or awaiting_action) at its current
+    screen, or start a new one when the previous session is completed / none exists.
     """
     service = CoachingSessionService(db)
-    session = service.start_or_resume_session(current_user.id)
-    resumed = session.current_screen.value != "s1_entry"
+    session, created = service.start_or_resume_session(current_user.id)
 
     return APIResponse(
         success=True,
-        message="Session resumed" if resumed else "Session started",
+        message="Session started" if created else "Session resumed",
         data=_session_state(service, session),
     )
 
@@ -50,12 +49,12 @@ async def get_active_coaching_session(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get the current in-progress session (for resuming mid-flow)."""
+    """Get the open session (in_progress or awaiting_action), if any."""
     service = CoachingSessionService(db)
-    session = service.get_in_progress_session(current_user.id)
+    session = service.get_open_session(current_user.id)
 
     if not session:
-        raise APIException(status_code=404, message="No in-progress coaching session found")
+        raise APIException(status_code=404, message="No open coaching session found")
 
     return APIResponse(
         success=True,

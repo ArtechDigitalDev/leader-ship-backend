@@ -41,31 +41,49 @@ class CoachingSessionService:
     # Session lifecycle
     # ------------------------------------------------------------------
 
-    def start_or_resume_session(self, user_id: int) -> CoachingSession:
+    def start_or_resume_session(self, user_id: int) -> tuple[CoachingSession, bool]:
         """
-        BRD: S1 appears every time the app is opened, but if the user left
-        mid-flow they return to where they left off — never restart.
-        """
-        active = self.get_in_progress_session(user_id)
-        if active:
-            return active
+        Resume any open session (in_progress or awaiting_action) at its
+        current_screen. Only create a new session when none is open
+        (previous one completed, or first time).
 
-        session = CoachingSession(user_id=user_id)
+        Returns (session, created) where created is True only for a brand-new row.
+        """
+        open_session = self.get_open_session(user_id)
+        if open_session:
+            return open_session, False
+
+        session = CoachingSession(
+            user_id=user_id,
+            current_screen=CoachingScreen.S1_ENTRY,
+            status=SessionStatus.IN_PROGRESS,
+        )
         self.db.add(session)
         self.db.commit()
         self.db.refresh(session)
-        return session
+        return session, True
 
-    def get_in_progress_session(self, user_id: int) -> Optional[CoachingSession]:
+    def get_open_session(self, user_id: int) -> Optional[CoachingSession]:
+        """
+        Latest session that is still open: IN_PROGRESS (S1–S10) or
+        AWAITING_ACTION (S11 follow-up / S12 pending). Blocks starting another.
+        """
         return (
             self.db.query(CoachingSession)
             .filter(
                 CoachingSession.user_id == user_id,
-                CoachingSession.status == SessionStatus.IN_PROGRESS,
+                CoachingSession.status.in_([
+                    SessionStatus.IN_PROGRESS,
+                    SessionStatus.AWAITING_ACTION,
+                ]),
             )
             .order_by(CoachingSession.created_at.desc())
             .first()
         )
+
+    def get_in_progress_session(self, user_id: int) -> Optional[CoachingSession]:
+        """Alias for get_open_session (used by /active)."""
+        return self.get_open_session(user_id)
 
     def get_session(self, user_id: int, session_id: int) -> CoachingSession:
         session = (

@@ -50,6 +50,33 @@ def make_session(**kwargs):
     return CoachingSession(**defaults)
 
 
+# --- start resumes open sessions (in_progress + awaiting_action) --------------
+awaiting = make_session(
+    current_screen=CoachingScreen.S11_FOLLOW_UP_SCHEDULED,
+    status=SessionStatus.AWAITING_ACTION,
+)
+service.get_open_session = MagicMock(return_value=awaiting)
+session, created = service.start_or_resume_session(1)
+check("start resumes awaiting_action", session.current_screen, CoachingScreen.S11_FOLLOW_UP_SCHEDULED)
+check("start does not create when awaiting", created, False)
+service.db.add.assert_not_called()
+
+in_prog = make_session(current_screen=CoachingScreen.S4_DURATION)
+service.get_open_session = MagicMock(return_value=in_prog)
+session, created = service.start_or_resume_session(1)
+check("start resumes in_progress", session.current_screen, CoachingScreen.S4_DURATION)
+check("start does not create when in_progress", created, False)
+
+service.get_open_session = MagicMock(return_value=None)
+service.db.add = MagicMock()
+service.db.commit = MagicMock()
+service.db.refresh = MagicMock()
+session, created = service.start_or_resume_session(1)
+check("start creates when no open session", created, True)
+check("new session starts at S1", session.current_screen, CoachingScreen.S1_ENTRY)
+service.db.add.assert_called_once()
+
+
 # --- go_back one step ---------------------------------------------------------
 session = make_session(current_screen=CoachingScreen.S5_ACCOUNTABILITY)
 service.get_session = MagicMock(return_value=session)
