@@ -19,16 +19,18 @@ app = FastAPI(
     description="A modern FastAPI backend with comprehensive features",
 )
 
-# Start background scheduler
+# Background scheduler temporarily disabled (jobs commented out — code kept)
 @app.on_event("startup")
 async def startup_event():
     """Start background jobs on application startup"""
-    start_scheduler()
+    # start_scheduler()
+    pass
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Stop background jobs on application shutdown"""
-    stop_scheduler()
+    # stop_scheduler()
+    pass
 
 # Register custom exception handler
 app.add_exception_handler(APIException, api_exception_handler)
